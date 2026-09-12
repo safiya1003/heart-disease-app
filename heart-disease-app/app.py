@@ -216,7 +216,7 @@ st.markdown("""
 @st.cache_resource
 def get_model_assets():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "KNN_heart.pkl")
+    model_path = os.path.join(base_dir, "base_dir")
     scaler_path = os.path.join(base_dir, "scaler.pkl")
     columns_path = os.path.join(base_dir, "columns.pkl")
 
