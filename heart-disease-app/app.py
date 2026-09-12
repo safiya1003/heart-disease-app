@@ -1,753 +1,768 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import time
 import os
-import datetime
-import random
-from PIL import Image
-
-
-# Page Config (custom icon used as favicon + sidebar logo)
-
-ICON_PATH = "icon.png"
-if os.path.exists(ICON_PATH):
-    page_icon = Image.open(ICON_PATH)
-else:
-    page_icon = "❤️"
 
 st.set_page_config(
-    page_title="Heart Stroke & Health Care Platform",
-    page_icon=page_icon,
+    page_title="Heart Disease Prediction | Better Insights • Healthier Tomorrows",
+    page_icon="❤️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-
-# Splash Screen
-
-if "splash_shown" not in st.session_state:
-    st.session_state.splash_shown = False
-
-if not st.session_state.splash_shown:
-    splash = st.empty()
-    with splash.container():
-        st.markdown("""
-            <style>
-            .splash-wrap {
-                height: 80vh;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background: radial-gradient(circle at center, #2b1055 0%, #0f0c29 100%);
-                border-radius: 24px;
-            }
-            .splash-icon {
-                width: 130px;
-                height: 130px;
-                animation: pulse 1.1s ease-in-out infinite;
-                filter: drop-shadow(0 0 25px rgba(230,57,70,0.6));
-            }
-            @keyframes pulse {
-                0%   { transform: scale(1); }
-                50%  { transform: scale(1.12); }
-                100% { transform: scale(1); }
-            }
-            .splash-title {
-                color: white;
-                font-size: 2.1rem;
-                font-weight: 800;
-                margin-top: 25px;
-                letter-spacing: 0.5px;
-            }
-            .splash-sub {
-                color: #cfcfe8;
-                font-size: 1rem;
-                margin-top: 8px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
-        if os.path.exists(ICON_PATH):
-            import base64
-            with open(ICON_PATH, "rb") as f:
-                icon_b64 = base64.b64encode(f.read()).decode()
-            icon_html = f'<img class="splash-icon" src="data:image/png;base64,{icon_b64}"/>'
-        else:
-            icon_html = '<div style="font-size:100px;">❤️</div>'
-
-        st.markdown(f"""
-            <div class="splash-wrap">
-                {icon_html}
-                <div class="splash-title">Heart Health & Prediction Platform</div>
-                <div class="splash-sub">Loading your clinical dashboard, please wait...</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    time.sleep(2.0)
-    st.session_state.splash_shown = True
-    splash.empty()
-    st.rerun()
-
-
-# Custom CSS Styling
-
+# Custom Design & Grid Styling
 st.markdown("""
-    <style>
-    /* Overall background */
-    .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%);
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        background-color: #fcfdfe;
+        color: #1e293b;
     }
 
-    /* Title styling */
-    .main-title {
-        font-size: 2.6rem;
-        font-weight: 800;
-        background: -webkit-linear-gradient(45deg, #e63946, #d90429);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-align: center;
-        margin-bottom: 0px;
-    }
-    .sub-title {
-        text-align: center;
-        color: #555;
-        font-size: 1.05rem;
-        margin-top: 0px;
-        margin-bottom: 25px;
+    .block-container {
+        padding-top: 1.2rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1240px !important;
     }
 
-    /* Section headings */
-    .section-heading {
-        color: #1a1a2e;
+    [data-testid="stSidebarNav"], footer, header {
+        display: none !important;
+    }
+
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0 1.2rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+    }
+    .brand-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .brand-icon {
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 1.4rem;
-        font-weight: 800;
-        margin: 10px 0 16px 0;
+        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28);
     }
-
-    /* Hint box */
-    .hint-box {
-        background: #e7f1ff;
-        color: #1a1a2e;
-        border-left: 5px solid #4361ee;
-        padding: 16px 20px;
-        border-radius: 10px;
-        font-size: 1rem;
+    .brand-title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .brand-sub {
+        margin: 0;
+        font-size: 0.78rem;
+        color: #64748b;
         font-weight: 500;
     }
-    .metric-card {
-        background: #ffffff;
-        padding: 18px 16px 16px 16px;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.07);
-        margin-bottom: 18px;
-        text-align: center;
-        border: 1px solid #eee;
-        transition: 0.25s;
-    }
-    .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 22px rgba(217,4,41,0.12);
-    }
-    .metric-icon {
-        font-size: 1.6rem;
-        margin-bottom: 4px;
-    }
-    .metric-label {
-        color: #888;
-        font-size: 0.82rem;
-        font-weight: 600;
+
+    .hero-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
-        margin-bottom: 4px;
-    }
-    .metric-value {
-        color: #1a1a2e;
-        font-size: 1.3rem;
-        font-weight: 800;
-    }
-
-    /* Result box */
-    .result-high {
-        background: linear-gradient(135deg, #ff6b6b, #d90429);
-        color: white;
-        padding: 25px;
-        border-radius: 16px;
-        text-align: center;
-        font-size: 1.4rem;
-        font-weight: 700;
-        box-shadow: 0 4px 20px rgba(217,4,41,0.35);
-    }
-    .result-low {
-        background: linear-gradient(135deg, #38b000, #008000);
-        color: white;
-        padding: 25px;
-        border-radius: 16px;
-        text-align: center;
-        font-size: 1.4rem;
-        font-weight: 700;
-        box-shadow: 0 4px 20px rgba(56,176,0,0.35);
-    }
-
-    /* Doctor Profile Cards */
-    .doctor-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-        border: 1px solid #e2e8f0;
-        margin-bottom: 15px;
-        transition: 0.2s;
-    }
-    .doctor-card:hover {
-        border-color: #e63946;
-        box-shadow: 0 6px 20px rgba(230,57,70,0.15);
-    }
-    .doctor-name {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1a1a2e;
-        margin-bottom: 3px;
-    }
-    .doctor-spec {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: #e63946;
-        margin-bottom: 8px;
-    }
-    .doctor-detail {
-        font-size: 0.88rem;
         color: #64748b;
-        margin: 2px 0;
+        margin-bottom: 0.75rem;
     }
-
-    /* Booking Confirmation */
-    .confirm-box {
-        background: #ecfdf5;
-        border: 1px solid #10b981;
-        border-radius: 16px;
-        padding: 24px;
-        margin-top: 20px;
-    }
-    .confirm-title {
-        color: #065f46;
-        font-size: 1.35rem;
+    .hero-title-dark {
+        font-size: 3.4rem;
         font-weight: 800;
-        margin-bottom: 10px;
+        color: #0f172a;
+        line-height: 1.1;
+        margin: 0;
     }
-
-    /* Sidebar header */
-    .sidebar-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #d90429;
-        margin-bottom: 10px;
+    .hero-title-red {
+        font-size: 3.4rem;
+        font-weight: 800;
+        color: #e11d48;
+        line-height: 1.1;
+        margin: 0 0 1.2rem 0;
+    }
+    .hero-description {
+        font-size: 1.05rem;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 1.8rem;
     }
 
     div.stButton > button {
-        width: 100%;
-        background: linear-gradient(45deg, #d90429, #e63946);
-        color: white;
-        font-weight: 700;
-        font-size: 1.05rem;
-        padding: 12px 0px;
-        border-radius: 12px;
-        border: none;
-        transition: 0.3s;
+        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 26px !important;
+        padding: 0.5rem 1.4rem !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25) !important;
+        transition: all 0.25s ease-in-out !important;
     }
     div.stButton > button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 18px rgba(217,4,41,0.4);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 22px rgba(225, 29, 72, 0.35) !important;
     }
 
-    /* Chatbot Message Text Visibility & Dark Text Color */
-    [data-testid="stChatMessage"],
-    .stChatMessage {
-        background-color: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 14px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-        margin-bottom: 10px !important;
+    .features-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.2rem;
+        margin: 2.2rem 0;
+    }
+    .feature-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 1.1rem 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .feature-circle {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+    .feature-txt h5 {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .feature-txt p {
+        margin: 2px 0 0 0;
+        font-size: 0.77rem;
+        color: #64748b;
     }
 
-    [data-testid="stChatMessage"] *,
-    .stChatMessage *,
-    [data-testid="stChatMessageContent"],
-    [data-testid="stChatMessageContent"] *,
-    .stChatMessage [data-testid="stMarkdownContainer"],
-    .stChatMessage [data-testid="stMarkdownContainer"] * {
-        color: #1E1E1E !important;
+    .section-title-wrap {
+        margin: 2.5rem 0 1.2rem 0;
+    }
+    .section-title-wrap h3 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .section-title-wrap p {
+        margin: 0.3rem 0 0 0;
+        font-size: 0.85rem;
+        color: #64748b;
     }
 
-    /* Ensure chat input text is also dark and readable */
-    [data-testid="stChatInput"] textarea {
-        color: #1E1E1E !important;
-        background-color: #ffffff !important;
+    .topic-tile {
+        border-radius: 16px;
+        padding: 1.1rem 1rem;
+        border: 1px solid rgba(0,0,0,0.03);
+        margin-bottom: 0.5rem;
     }
-    </style>
+    .topic-tile-icon {
+        font-size: 1.35rem;
+        margin-bottom: 0.4rem;
+    }
+    .topic-tile h4 {
+        margin: 0 0 0.3rem 0;
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .topic-tile p {
+        margin: 0;
+        font-size: 0.76rem;
+        color: #64748b;
+        line-height: 1.4;
+    }
+
+    .content-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.03);
+    }
+
+    .clinical-footer {
+        background: #090e17;
+        color: #94a3b8;
+        padding: 1.6rem;
+        text-align: center;
+        font-size: 0.85rem;
+        border-radius: 18px;
+        margin-top: 3rem;
+        letter-spacing: 0.02em;
+    }
+</style>
 """, unsafe_allow_html=True)
 
+# Safe Loader for Model Assets
+@st.cache_resource
+def get_model_assets():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, "base_dir")
+    scaler_path = os.path.join(base_dir, "scaler.pkl")
+    columns_path = os.path.join(base_dir, "columns.pkl")
 
-# Load saved model, scaler, and expected columns
+    model = joblib.load(model_path) if os.path.exists(model_path) else None
+    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
+    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
+    return model, scaler, columns
+model, scaler, expected_columns = get_model_assets()
 
-model = joblib.load("KNN_heart.pkl")
-scaler = joblib.load("scaler.pkl")
-expected_columns = joblib.load("columns.pkl")
+# Modal Dialog Functions
+@st.dialog("🩺 Cardiovascular Assessment Diagnostic")
+def open_prediction_dialog():
+    st.caption("Enter clinical markers below to evaluate cardiac health status:")
+    d1, d2 = st.columns(2)
+    with d1:
+        age_in = st.slider("Age (Years)", 18, 100, 42)
+        sex_in = st.selectbox("Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female")
+        cp_in = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"])
+        rbp_in = st.number_input("Resting BP (mm Hg)", 80, 220, 120)
+        chol_in = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 205)
+    with d2:
+        fbs_in = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
+        ecg_in = st.selectbox("Resting ECG", ["Normal", "ST", "LVH"])
+        mhr_in = st.slider("Max Heart Rate (bpm)", 60, 220, 150)
+        ang_in = st.selectbox("Exercise Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No")
+        slope_in = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
+        oldpeak_in = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0)
 
+    if st.button("Run AI Risk Evaluation", use_container_width=True):
+        if model and scaler and expected_columns:
+            raw_dict = {
+                'Age': age_in, 'RestingBP': rbp_in, 'Cholesterol': chol_in,
+                'FastingBS': fbs_in, 'MaxHR': mhr_in, 'Oldpeak': oldpeak_in,
+                'Sex_' + sex_in: 1, 'ChestPainType_' + cp_in: 1,
+                'RestingECG_' + ecg_in: 1, 'ExerciseAngina_' + ang_in: 1,
+                'ST_Slope_' + slope_in: 1
+            }
+            df = pd.DataFrame([raw_dict])
+            for col in expected_columns:
+                if col not in df.columns:
+                    df[col] = 0
+            df = df[expected_columns]
+            scaled_df = scaler.transform(df)
+            pred = model.predict(scaled_df)[0]
+            proba = model.predict_proba(scaled_df)[0][1] if hasattr(model, "predict_proba") else None
 
-# Header
+            if pred == 1:
+                st.error("⚠️ Elevated Risk Detected: Parameters indicate potential cardiovascular abnormalities.")
+            else:
+                st.success("✅ Normal Range: Parameters are within healthy cardiovascular bounds.")
 
-st.markdown('<div class="main-title">❤️ Heart Health & Stroke Risk Intelligence</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">by Safiya &nbsp;|&nbsp; AI-Powered Cardiac Risk Assessment, 24/7 Virtual Assistant & Specialist Care</div>', unsafe_allow_html=True)
+            if proba is not None:
+                st.progress(float(proba), text=f"Predicted Probability: {proba * 100:.1f}%")
+        else:
+            st.info(f"Evaluation complete for {age_in}-year-old ({sex_in}). Place .pkl model files in the project folder for live inference.")
 
+@st.dialog("❤️ Comprehensive Guide: Heart Disease", width="large")
+def show_heart_disease_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=700&q=80", caption="Arterial Structure & Anatomy", use_container_width=True)
+        st.markdown("""
+        | Condition | Primary Focus |
+        | :--- | :--- |
+        | **CAD** | Coronary Arteries |
+        | **Arrhythmia** | Electrical Conduction |
+        | **Cardiomyopathy** | Ventricular Muscle |
+        """)
+    with c_txt:
+        st.markdown("#### Clinical Overview & Pathophysiology")
+        st.markdown("""
+        * **Atherosclerosis Initiation:** Starts with arterial lining damage, followed by LDL cholesterol calcification.
+        * **Coronary Artery Narrowing:** Plaque buildup restricts oxygenated blood delivery to heart tissues.
+        * **Ischemic Cascades:** Prolonged oxygen deprivation leads to cellular injury and potential myocardial infarction.
+        * **Global Mortality:** Cardiovascular conditions remain the leading global cause of death according to WHO data.
+        * **Genetic Risks:** Inherited lipoprotein levels and family history significantly elevate baseline risks.
+        * **Hypertension Impact:** Chronic high blood pressure strains heart chambers, inducing left ventricular hypertrophy.
+        * **Metabolic Syndrome:** Concomitant elevated glucose and high triglycerides accelerate arterial stiffness.
+        """)
 
-# Sidebar Inputs
+@st.dialog("⚠️ Clinical Symptoms & Early Warning Signs", width="large")
+def show_symptoms_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=700&q=80", caption="Clinical Symptom Triage", use_container_width=True)
+        st.markdown("""
+        | Angina Class | Clinical Description |
+        | :--- | :--- |
+        | **Typical (TA)** | Pressure relieved with rest |
+        | **Atypical (ATA)** | Dyspnea, fatigue, nausea |
+        | **Silent (ASY)** | Painless ischemia in diabetics |
+        """)
+    with c_txt:
+        st.markdown("#### Common Warning Signs & Variants")
+        st.markdown("""
+        * **Substernal Pressure:** Squeezing discomfort or heavy tightness centered in the chest.
+        * **Referred Pain Pathways:** Discomfort spreading outward to the neck, jaw, shoulder, or left arm.
+        * **Exertional Dyspnea:** Unexplained shortness of breath during light daily activity or rest.
+        * **Cold Diaphoresis:** Clammy, sudden cold sweat occurring independently of room temperature.
+        * **Female Presentation:** Women frequently exhibit atypical signs such as nausea, dizziness, or indigestion.
+        * **Silent Ischemia:** Diabetic neuropathy can mask typical pain cues entirely.
+        * **Syncope & Presyncope:** Unexplained lightheadedness indicating poor cardiac perfusion.
+        """)
 
-with st.sidebar:
-    st.markdown('<div class="sidebar-title">🩺 Patient Clinical Details</div>', unsafe_allow_html=True)
-    st.caption("Adjust patient parameters below and evaluate heart disease risk:")
+@st.dialog("📊 Algorithmic Risk Stratification", width="large")
+def show_risk_prediction_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=700&q=80", caption="Risk Stratification Analytics", use_container_width=True)
+        st.markdown("""
+        | Clinical Parameter | Baseline Target | Elevated Risk |
+        | :--- | :--- | :--- |
+        | **Blood Pressure** | < 120/80 mmHg | ≥ 130/80 mmHg |
+        | **Cholesterol** | < 200 mg/dL | ≥ 240 mg/dL |
+        | **ST Depression** | 0.0 mm | > 1.5 mm |
+        """)
+    with c_txt:
+        st.markdown("#### Machine Learning Analytics Architecture")
+        st.markdown("""
+        * **Multivariable Mapping:** Algorithms evaluate interconnected metrics across 11 key diagnostic markers.
+        * **Standardized Scaling:** Z-score normalization balances disparate units (blood pressure vs. heart rate).
+        * **Functional Capacity:** Maximum achieved heart rate provides insights into coronary reserve strength.
+        * **ST Wave Dynamics:** ST slope (Up, Flat, Down) and depression detect reversible myocardial strain.
+        * **Glycemic Risk:** Elevated fasting blood sugar (>120 mg/dL) shifts statistical weight upwards.
+        * **Classification Sensitivity:** Supervised KNN models prioritize high sensitivity to reduce false negatives.
+        * **Proactive Re-testing:** Periodic metric re-entry supports continuous preventive tracking.
+        """)
 
-    age = st.slider("Age (Years)", 18, 100, 40)
-    sex = st.selectbox("Sex", ["M", "F"])
-    chest_pain = st.selectbox("Chest Pain Type", ["ATA", "NAP", "TA", "ASY"],
-                              help="ATA: Atypical Angina | NAP: Non-Anginal | TA: Typical Angina | ASY: Asymptomatic")
-    resting_bp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 200, 120)
-    cholesterol = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 200)
-    fasting_bs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1],
-                              format_func=lambda x: "Yes (> 120 mg/dL)" if x == 1 else "No (≤ 120 mg/dL)")
-    resting_ecg = st.selectbox("Resting ECG", ["Normal", "ST", "LVH"],
-                               help="Normal | ST: ST-T wave abnormality | LVH: Left ventricular hypertrophy")
-    max_hr = st.slider("Max Heart Rate Achieved (bpm)", 60, 220, 150)
-    exercise_angina = st.selectbox("Exercise-Induced Angina", ["Y", "N"],
-                                  format_func=lambda x: "Yes" if x == "Y" else "No")
-    oldpeak = st.slider("Oldpeak (ST Depression in mm)", 0.0, 6.0, 1.0)
-    st_slope = st.selectbox("ST Slope", ["Up", "Flat", "Down"],
-                            help="Slope of peak exercise ST segment")
+@st.dialog("🩺 Diagnostic Pathways & Screenings", width="large")
+def show_diagnosis_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=700&q=80", caption="Cardiovascular Diagnostic Modalities", use_container_width=True)
+        st.markdown("""
+        | Modality | Diagnostic Utility |
+        | :--- | :--- |
+        | **12-Lead ECG** | Rhythm & ST abnormalities |
+        | **Echocardiogram** | Ejection fraction, chamber size |
+        | **Angiography** | Direct visual arterial stenosis |
+        """)
+    with c_txt:
+        st.markdown("#### Primary Diagnostic Modalities")
+        st.markdown("""
+        * **12-Lead ECG:** Real-time electrical waveform tracing identifying ischemia and rhythm disorders.
+        * **Cardiac Biomarkers:** Blood tests measuring Troponin I/T to detect acute heart muscle injury.
+        * **Echocardiography:** Non-invasive ultrasound measuring chamber wall motion and ejection fraction.
+        * **Stress Testing:** Monitored treadmill exercise evaluating cardiac responses to physical stress.
+        * **Coronary CT (CCTA):** High-resolution scans quantifying calcium deposits in arterial walls.
+        * **Coronary Angiography:** Gold-standard catheter procedure mapping exact blockage percentages.
+        * **Holter Monitoring:** Ambulatory continuous recording capturing sporadic palpitations over 24–48 hours.
+        """)
 
-    predict_btn = st.button("🔍 Predict Risk", use_container_width=True)
+@st.dialog("🛡️ Prevention & Risk Mitigation", width="large")
+def show_prevention_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=700&q=80", caption="Preventive Lifestyle Interventions", use_container_width=True)
+        st.markdown("""
+        | Factor | Recommendation |
+        | :--- | :--- |
+        | **Aerobic Activity** | 150 min/week |
+        | **Sodium Intake** | < 2,000 mg/day |
+        | **Sleep Duration** | 7–8 hours/night |
+        """)
+    with c_txt:
+        st.markdown("#### Evidence-Based Interventions")
+        st.markdown("""
+        * **Mediterranean/DASH Diet:** Prioritize leafy greens, berries, legumes, olive oil, and omega-3s.
+        * **Sodium Control:** Keeping sodium below 2,000 mg per day reduces vessel wall tension and blood pressure.
+        * **Routine Exercise:** 30 minutes of daily moderate aerobic activity maintains vascular elasticity.
+        * **Smoking Cessation:** Halves personal cardiovascular event risks within one year of quitting.
+        * **Metabolic Tracking:** Maintaining healthy HbA1c and LDL cholesterol prevents plaque formation.
+        * **Adequate Sleep:** 7 to 8 hours of restorative sleep regulates nocturnal blood pressure dips.
+        * **Stress Management:** Controlled breathing and mindfulness exercises decrease chronic cortisol spikes.
+        """)
 
-    st.markdown("---")
-    st.markdown("### 💡 Quick Indicators Guide")
-    st.caption("• **Resting BP**: Ideal < 120 mmHg\n• **Cholesterol**: Optimal < 200 mg/dL\n• **Fasting Sugar**: Normal < 100 mg/dL")
+@st.dialog("🌱 Heart Health & Everyday Habits", width="large")
+def show_heart_health_modal():
+    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
+    with c_img:
+        st.image("https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=700&q=80", caption="Cardiovascular Wellness & Habits", use_container_width=True)
+        st.markdown("""
+        | Health Target | Recommended Target |
+        | :--- | :--- |
+        | **Resting Heart Rate** | 60–80 bpm |
+        | **Body Mass Index** | 18.5–24.9 kg/m² |
+        | **Daily Water Intake** | 2.5–3.0 Liters |
+        """)
+    with c_txt:
+        st.markdown("#### Practical Wellness Principles")
+        st.markdown("""
+        * **Resting Heart Rate:** Lower resting rates indicate efficient stroke volume and muscle conditioning.
+        * **Soluble Fiber:** Daily intake of oats, beans, and seeds helps reduce intestinal cholesterol absorption.
+        * **Omega-3 Fatty Acids:** Consuming fatty fish twice weekly supports healthy cell membrane fluidity.
+        * **Resistance Training:** Performing moderate strength training twice weekly enhances insulin sensitivity.
+        * **Consistent Hydration:** Drinking 2 to 3 liters of water daily helps maintain optimal blood viscosity.
+        * **Limiting Alcohol:** Avoiding excessive alcohol consumption reduces arrhythmia and cardiomyopathy risks.
+        * **Annual Checkups:** Consistent blood pressure monitoring and lipid profiling ensure early detection.
+        """)
 
+# Main Header & Navigation
+st.markdown("""
+<div class="top-navbar">
+    <div class="brand-group">
+        <div class="brand-icon">📈</div>
+        <div class="brand-text">
+            <h2 class="brand-title">Heart Disease Prediction</h2>
+            <p class="brand-sub">Better insights • Healthier Tomorrows</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# Navigation Tabs
-
-tab_predict, tab_chat, tab_doctor = st.tabs([
-    "🩺 Heart Risk Predictor",
-    "🤖 AI Health Assistant",
-    "📅 Doctor Consultation Booking"
+active_tab = st.tabs([
+    "🏠 Home", "♡ Heart Disease", "⚠️ Symptoms", "📊 Risk Prediction", "🛡️ Prevention", "ⓘ About"
 ])
 
+# Tab 1: Home
+with active_tab[0]:
+    hero_col1, hero_col2 = st.columns([1.1, 1], gap="large")
 
-def metric_card(icon, label, value):
-    """Return a fully self-contained HTML card."""
-    return f"""
-        <div class="metric-card">
-            <div class="metric-icon">{icon}</div>
-            <div class="metric-label">{label}</div>
-            <div class="metric-value">{value}</div>
+    with hero_col1:
+        st.markdown("""
+        <div style="margin-top: 1.5rem;">
+            <div class="hero-badge">AI-POWERED HEALTHCARE SOLUTION</div>
+            <h1 class="hero-title-dark">Heart Disease</h1>
+            <h1 class="hero-title-red">Prediction</h1>
+            <p class="hero-description">
+                Understand your heart. Predict the risk.<br>
+                Take control of your health.
+            </p>
         </div>
-    """
-
-
-# ==========================================
-# TAB 1: HEART RISK PREDICTOR
-# ==========================================
-with tab_predict:
-    st.markdown('<div class="section-heading">📋 Entered Clinical Summary</div>', unsafe_allow_html=True)
-
-    row1 = [
-        ("🎂", "Age", f"{age} yrs"),
-        ("💉", "Resting BP", f"{resting_bp} mmHg"),
-        ("🩸", "Cholesterol", f"{cholesterol} mg/dL"),
-        ("💓", "Max Heart Rate", f"{max_hr} bpm"),
-    ]
-    row2 = [
-        ("🧍", "Sex", "Male" if sex == "M" else "Female"),
-        ("💢", "Chest Pain", chest_pain),
-        ("📈", "ST Slope", st_slope),
-        ("🏃", "Exercise Angina", "Yes" if exercise_angina == "Y" else "No"),
-    ]
-
-    for row in (row1, row2):
-        cols = st.columns(4)
-        for col, (icon, label, value) in zip(cols, row):
-            with col:
-                st.markdown(metric_card(icon, label, value), unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    if predict_btn:
-        # Create raw input dictionary
-        raw_input = {
-            'Age': age,
-            'RestingBP': resting_bp,
-            'Cholesterol': cholesterol,
-            'FastingBS': fasting_bs,
-            'MaxHR': max_hr,
-            'Oldpeak': oldpeak,
-            'Sex_' + sex: 1,
-            'ChestPainType_' + chest_pain: 1,
-            'RestingECG_' + resting_ecg: 1,
-            'ExerciseAngina_' + exercise_angina: 1,
-            'ST_Slope_' + st_slope: 1
-        }
-
-        # Create input dataframe
-        input_df = pd.DataFrame([raw_input])
-
-        # Fill in missing columns with 0s
-        for col in expected_columns:
-            if col not in input_df.columns:
-                input_df[col] = 0
-
-        # Reorder columns
-        input_df = input_df[expected_columns]
-
-        # Scale the input
-        scaled_input = scaler.transform(input_df)
-
-        # Make prediction
-        prediction = model.predict(scaled_input)[0]
-
-        # Try to get probability
-        proba = None
-        if hasattr(model, "predict_proba"):
-            proba = model.predict_proba(scaled_input)[0][1]
-
-        st.markdown('<div class="section-heading">🎯 Clinical Prediction Result</div>', unsafe_allow_html=True)
-
-        res_col1, res_col2 = st.columns([2, 1])
-
-        with res_col1:
-            if prediction == 1:
-                st.markdown(
-                    '<div class="result-high">⚠️ High Risk of Heart Disease Detected</div>',
-                    unsafe_allow_html=True
-                )
-                st.warning(
-                    "**Clinical Recommendation:** Your parameters indicate potential cardiovascular risks. "
-                    "We strongly advise consulting a cardiologist for an ECG and comprehensive examination. "
-                    "You can schedule an appointment directly using the **Doctor Consultation** tab."
-                )
-            else:
-                st.markdown(
-                    '<div class="result-low">✅ Low Risk of Heart Disease</div>',
-                    unsafe_allow_html=True
-                )
-                st.success(
-                    "**Great News!** Your entered parameters fall within lower cardiovascular risk percentiles. "
-                    "Continue maintaining balanced nutrition, physical activity, and regular annual checkups."
-                )
-
-        with res_col2:
-            if proba is not None:
-                st.markdown(
-                    metric_card("📊", "Risk Probability", f"{proba*100:.1f}%"),
-                    unsafe_allow_html=True
-                )
-                st.progress(min(max(proba, 0.0), 1.0))
-            else:
-                st.info("Probability score not available for this model.")
-
-        st.markdown("---")
-        st.caption("⚕️ **Disclaimer:** This tool provides an estimate based on machine learning algorithms and does not constitute official medical diagnosis. Consult a licensed medical practitioner for clinical evaluation.")
-
-    else:
-        st.markdown(
-            '<div class="hint-box">👈 Check the sidebar values and click <b>Predict Risk</b> to run the AI cardiac assessment.</div>',
-            unsafe_allow_html=True
-        )
-
-
-# ==========================================
-# TAB 2: AI HEALTH ASSISTANT CHATBOT
-# ==========================================
-with tab_chat:
-    st.markdown('<div class="section-heading">🤖 CardioCare AI Health Assistant</div>', unsafe_allow_html=True)
-    st.caption("Ask questions about heart health, diet recommendations, cholesterol, blood pressure, or lifestyle management.")
-
-    # Rule & Knowledge-based Medical AI response engine
-    def get_ai_response(prompt: str) -> str:
-        p = prompt.lower()
-
-        # Emergency keywords
-        if any(w in p for w in ["emergency", "heart attack", "crushing", "severe pain", "radiating", "unconscious"]):
-            return (
-                "🚨 **EMERGENCY WARNING:** If you or someone around you is experiencing sudden crushing chest pressure, "
-                "pain radiating to the left arm, neck, jaw, sudden shortness of breath, cold sweat, or extreme lightheadedness, "
-                "**immediately call your local emergency services (911 or 112) or go to the nearest emergency room.** "
-                "Do not attempt to drive yourself."
-            )
-
-        # Blood Pressure
-        elif any(w in p for w in ["blood pressure", "bp", "hypertension", "systolic", "diastolic"]):
-            return (
-                "🩸 **Understanding Blood Pressure (BP):**\n\n"
-                "- **Normal:** Less than 120/80 mm Hg\n"
-                "- **Elevated:** 120-129 / < 80 mm Hg\n"
-                "- **Stage 1 Hypertension:** 130-139 / 80-89 mm Hg\n"
-                "- **Stage 2 Hypertension:** 140+ / 90+ mm Hg\n\n"
-                "**Evidence-Based Ways to Lower BP Naturally:**\n"
-                "1. **DASH Diet:** Focus on leafy vegetables, fruits, whole grains, and potassium-rich foods (bananas, spinach).\n"
-                "2. **Sodium Reduction:** Limit sodium intake to under 1,500 - 2,000 mg per day.\n"
-                "3. **Regular Aerobic Activity:** 30 minutes of brisk walking or swimming 5 days a week.\n"
-                "4. **Stress Reduction:** Practice daily mindfulness or deep breathing exercises."
-            )
-
-        # Cholesterol
-        elif any(w in p for w in ["cholesterol", "ldl", "hdl", "triglycerides", "lipid"]):
-            return (
-                "🧪 **Managing Cholesterol Levels:**\n\n"
-                "- **Total Cholesterol:** Desirable under 200 mg/dL.\n"
-                "- **LDL ('Bad' Cholesterol):** Optimal under 100 mg/dL (or <70 mg/dL if at high cardiovascular risk).\n"
-                "- **HDL ('Good' Cholesterol):** 50+ mg/dL for women, 40+ mg/dL for men.\n"
-                "- **Triglycerides:** Normal is below 150 mg/dL.\n\n"
-                "**Actionable Lifestyle Tips:**\n"
-                "- Increase soluble fiber (oats, barley, beans, apples).\n"
-                "- Choose healthy unsaturated fats: Extra virgin olive oil, avocados, almonds, and walnuts.\n"
-                "- Consume Omega-3 fatty acids (salmon, chia seeds, flaxseeds).\n"
-                "- Minimize trans fats and processed meats."
-            )
-
-        # Diet / Nutrition
-        elif any(w in p for w in ["diet", "food", "eat", "nutrition", "meal", "sugar"]):
-            return (
-                "🥗 **Cardio-Protective Nutrition (Mediterranean & DASH Plans):**\n\n"
-                "- **Plentiful:** Green leafy vegetables, berries, legumes, whole grains, extra virgin olive oil.\n"
-                "- **Moderate:** Lean poultry, fatty fish (rich in Omega-3), low-fat dairy, nuts and seeds.\n"
-                "- **Avoid or Limit:** Added sugars, sodas, ultra-processed snacks, deep-fried foods, and high-sodium canned foods.\n"
-                "- **Hydration:** Aim for 2-3 liters of water daily to maintain optimal blood volume and electrolyte balance."
-            )
-
-        # Exercise
-        elif any(w in p for w in ["exercise", "workout", "gym", "running", "walking", "cardio", "fitness"]):
-            return (
-                "🏃 **Exercise Guidelines for Heart Health:**\n\n"
-                "- **Recommendation (AHA):** At least 150 minutes of moderate-intensity aerobic exercise per week (e.g., 30 mins, 5 days/week), or 75 minutes of vigorous activity.\n"
-                "- **Best Cardio Activities:** Brisk walking, cycling, swimming, rowing, low-impact aerobics.\n"
-                "- **Strength Training:** Include light resistance training 2 times per week.\n"
-                "- **Important Safety Caution:** If you experience dizziness, unusual chest tightness, or excessive breathlessness during exercise, stop immediately and consult a physician."
-            )
-
-        # Chest Pain types
-        elif any(w in p for w in ["chest pain", "angina", "ata", "nap", "asy", "ta"]):
-            return (
-                "💢 **Clinical Chest Pain Classifications:**\n\n"
-                "- **TA (Typical Angina):** Substernal chest pressure provoked by physical exertion or stress and relieved by rest or nitroglycerin.\n"
-                "- **ATA (Atypical Angina):** Chest discomfort accompanied by unusual symptoms (fatigue, shortness of breath, nausea), often observed in women.\n"
-                "- **NAP (Non-Anginal Pain):** Discomfort likely originating from musculoskeletal, gastrointestinal (acid reflux), or respiratory sources.\n"
-                "- **ASY (Asymptomatic):** Absence of noticeable chest discomfort. Silent ischemia can still occur, especially in individuals with diabetes."
-            )
-
-        # Fasting Blood Sugar / Diabetes
-        elif any(w in p for w in ["sugar", "diabetes", "fasting", "glucose"]):
-            return (
-                "🩸 **Blood Glucose & Heart Disease Connection:**\n\n"
-                "- **Normal Fasting Glucose:** 70 to 99 mg/dL.\n"
-                "- **Prediabetes:** 100 to 125 mg/dL.\n"
-                "- **Diabetes:** 126 mg/dL or higher on repeat tests.\n\n"
-                "Chronically high blood sugar damages blood vessels and the nerves controlling your heart, doubling the risk of coronary artery disease."
-            )
-
-        # Default fallback
-        else:
-            return (
-                f"Heart health is influenced by interconnected factors: blood pressure, cholesterol, glucose control, "
-                f"physical activity, and genetics.\n\n"
-                f"**Key Pillars of Cardiovascular Wellness:**\n"
-                f"1. **Monitor Numbers:** Keep Resting BP < 120/80 mmHg and Cholesterol < 200 mg/dL.\n"
-                f"2. **Daily Movement:** At least 30 minutes of moderate cardio.\n"
-                f"3. **Anti-inflammatory Diet:** Rich in antioxidants, fiber, and omega-3s.\n"
-                f"4. **Restorative Sleep:** 7-8 hours per night to regulate cardiac stress hormones.\n\n"
-                f"You can ask me specifically about **diet**, **exercise**, **cholesterol**, **blood pressure**, or **emergency warning signs**!"
-            )
-
-    # Initialize chat history
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = [
-            {
-                "role": "assistant",
-                "content": (
-                    "👋 Hello! I am **CardioCare AI**, your heart health assistant. "
-                    "I can answer questions regarding cardiovascular prevention, blood pressure, "
-                    "cholesterol management, exercise safety, and healthy nutrition. How can I help you today?"
-                )
-            }
-        ]
-
-    # Quick prompt buttons
-    st.markdown("**Quick Topics:**")
-    quick_cols = st.columns(4)
-    quick_queries = [
-        ("🥗 Heart-Healthy Diet", "What is the best diet for heart health?"),
-        ("🩸 Lower Blood Pressure", "How can I lower my blood pressure naturally?"),
-        ("🧪 Cholesterol Tips", "How to manage high cholesterol and LDL?"),
-        ("🚨 Emergency Signs", "What are emergency warning signs of a heart attack?"),
-    ]
-
-    for col, (btn_label, query_text) in zip(quick_cols, quick_queries):
-        with col:
-            if st.button(btn_label, use_container_width=True):
-                st.session_state.chat_history.append({"role": "user", "content": query_text})
-                response = get_ai_response(query_text)
-                st.session_state.chat_history.append({"role": "assistant", "content": response})
-                st.rerun()
-
-    # Display chat history
-    chat_container = st.container()
-    with chat_container:
-        for msg in st.session_state.chat_history:
-            if msg["role"] == "user":
-                with st.chat_message("user", avatar="👤"):
-                    st.write(msg["content"])
-            else:
-                with st.chat_message("assistant", avatar="❤️"):
-                    st.markdown(msg["content"])
-
-    # User input field
-    user_query = st.chat_input("Type your heart health question here...")
-    if user_query:
-        st.session_state.chat_history.append({"role": "user", "content": user_query})
-        ai_reply = get_ai_response(user_query)
-        st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
-        st.rerun()
-
-    if len(st.session_state.chat_history) > 1:
-        if st.button("🗑️ Clear Chat History", key="clear_chat"):
-            st.session_state.chat_history = [st.session_state.chat_history[0]]
-            st.rerun()
-
-
-# ==========================================
-# TAB 3: DOCTOR CONSULTATION BOOKING
-# ==========================================
-with tab_doctor:
-    st.markdown('<div class="section-heading">📅 Schedule a Cardiologist Consultation</div>', unsafe_allow_html=True)
-    st.caption("Connect with top board-certified cardiologists for telehealth video visits or in-person examinations.")
-
-    # Doctor Profiles Display
-    doc_col1, doc_col2, doc_col3 = st.columns(3)
-
-    with doc_col1:
-        st.markdown("""
-            <div class="doctor-card">
-                <div class="doctor-name">👨‍⚕️ Dr. Rajesh Kumar, MD</div>
-                <div class="doctor-spec">Senior Interventional Cardiologist</div>
-                <div class="doctor-detail">🏥 Apollo Heart Institute</div>
-                <div class="doctor-detail">⭐ 4.9/5 (340+ reviews) | 16 yrs exp</div>
-                <div class="doctor-detail">💬 Angioplasty, Ischemia, Coronary Care</div>
-            </div>
         """, unsafe_allow_html=True)
 
-    with doc_col2:
+        if st.button("♡ Start Prediction →", key="btn_hero_start"):
+            open_prediction_dialog()
+
+    with hero_col2:
         st.markdown("""
-            <div class="doctor-card">
-                <div class="doctor-name">👩‍⚕️ Dr. Sarah Jenkins, MD</div>
-                <div class="doctor-spec">Preventive Cardiology & Lipidology</div>
-                <div class="doctor-detail">🏥 Metro Heart & Vascular Center</div>
-                <div class="doctor-detail">⭐ 4.95/5 (410+ reviews) | 13 yrs exp</div>
-                <div class="doctor-detail">💬 Hypertension, Cholesterol, Women's Heart</div>
-            </div>
+        <div style="text-align: center; padding-top: 10px;">
+            <img src="https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=750&q=80" 
+                 alt="Cardiac Visual" 
+                 style="width: 88%; max-height: 380px; object-fit: cover; border-radius: 24px; box-shadow: 0 16px 40px rgba(225,29,72,0.18);">
+        </div>
         """, unsafe_allow_html=True)
 
-    with doc_col3:
-        st.markdown("""
-            <div class="doctor-card">
-                <div class="doctor-name">👨‍⚕️ Dr. Emily Chen, MD, FHRS</div>
-                <div class="doctor-spec">Cardiac Electrophysiologist</div>
-                <div class="doctor-detail">🏥 Stanford Cardiovascular Care</div>
-                <div class="doctor-detail">⭐ 4.88/5 (290+ reviews) | 11 yrs exp</div>
-                <div class="doctor-detail">💬 Arrhythmia, Palpitations, ECG Analysis</div>
+    # 4 Feature Badges
+    st.markdown("""
+    <div class="features-row">
+        <div class="feature-item">
+            <div class="feature-circle" style="background:#e0f2fe; color:#0284c7;">⚡</div>
+            <div class="feature-txt">
+                <h5>Machine Learning</h5>
+                <p>Powered Predictions</p>
             </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-circle" style="background:#dcfce7; color:#16a34a;">🛡️</div>
+            <div class="feature-txt">
+                <h5>Accurate Results</h5>
+                <p>Based on Real Data</p>
+            </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-circle" style="background:#f3e8ff; color:#9333ea;">⏱️</div>
+            <div class="feature-txt">
+                <h5>Quick & Easy</h5>
+                <p>Just a Few Steps</p>
+            </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-circle" style="background:#ffe4e6; color:#e11d48;">❤️</div>
+            <div class="feature-txt">
+            <h5>Better Decisions</h5>
+                <p>For a Healthier Life</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="section-title-wrap">
+        <h3>📈 Explore More About Heart Health</h3>
+        <p>Learn about heart disease, its symptoms, risk factors and how you can prevent it.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c1, c2, c3, c4, c5, c6 = st.columns(6)
+
+    with c1:
+        st.markdown("""
+        <div class="topic-tile" style="background:#fff1f2; min-height:160px;">
+            <div class="topic-tile-icon">❤️</div>
+            <h4>Heart Disease</h4>
+            <p>What is heart disease, its types and clinical risks.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c1", use_container_width=True):
+            show_heart_disease_modal()
+
+    with c2:
+        st.markdown("""
+        <div class="topic-tile" style="background:#fefce8; min-height:160px;">
+            <div class="topic-tile-icon">⚠️</div>
+            <h4>Symptoms</h4>
+            <p>Know the warning signs, angina and silent cues.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c2", use_container_width=True):
+            show_symptoms_modal()
+
+    with c3:
+        st.markdown("""
+        <div class="topic-tile" style="background:#f0f9ff; min-height:160px;">
+            <div class="topic-tile-icon">📊</div>
+            <h4>Risk Prediction</h4>
+            <p>How metrics calculate cardiovascular likelihood.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c3", use_container_width=True):
+            show_risk_prediction_modal()
+
+    with c4:
+        st.markdown("""
+        <div class="topic-tile" style="background:#faf5ff; min-height:160px;">
+            <div class="topic-tile-icon">🩺</div>
+            <h4>Diagnosis</h4>
+            <p>How conditions are identified and clinically screened.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c4", use_container_width=True):
+            show_diagnosis_modal()
+
+    with c5:
+        st.markdown("""
+        <div class="topic-tile" style="background:#f0fdf4; min-height:160px;">
+            <div class="topic-tile-icon">🛡️</div>
+            <h4>Prevention</h4>
+            <p>Guidelines and proactive steps for long-term health.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c5", use_container_width=True):
+            show_prevention_modal()
+
+    with c6:
+        st.markdown("""
+        <div class="topic-tile" style="background:#f0fdfa; min-height:160px;">
+            <div class="topic-tile-icon">🌱</div>
+            <h4>Heart Health</h4>
+            <p>Cardioprotective habits, diet and daily exercises.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Learn more →", key="btn_c6", use_container_width=True):
+            show_heart_health_modal()
+
+# Tab 2: Heart Disease
+with active_tab[1]:
+    st.markdown("""
+    <div class="content-box">
+        <h2 style="color:#0f172a; margin-top:0;">Understanding Cardiovascular Diseases (CVD)</h2>
+        <p style="color:#475569; font-size:1.05rem;">
+            Cardiovascular diseases represent a spectrum of structural and functional disorders affecting blood vessels and the heart muscle. Atherosclerosis—the arterial hardening caused by calcified lipid plaques—is the fundamental driver across most acute coronary events.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    c_hd1, c_hd2, c_hd3 = st.columns(3)
+    with c_hd1:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>🫀 Coronary Artery Disease (CAD)</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                <b>Mechanism:</b> Gradual narrowing of the coronary arteries by cholesterol plaque diminishes myocardial perfusion.<br><br>
+                <b>Clinical Implication:</b> Results in stable angina during exercise or unstable acute coronary syndromes if the fibrous cap ruptures.
+            </p>
+        </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.markdown("### 📝 Patient Booking Details")
+    with c_hd2:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>🧠 Cerebrovascular Disease</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                <b>Mechanism:</b> Occlusion of carotid or cerebral vessels by thrombi causes ischemic strokes, while vessel ruptures induce intracranial hemorrhage.<br><br>
+                <b>Clinical Implication:</b> Rapid loss of neurological function requiring emergency thrombolytic intervention within a 4.5-hour therapeutic window.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    if "booked_appointments" not in st.session_state:
-        st.session_state.booked_appointments = []
+    with c_hd3:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>⚡ Heart Failure & Arrhythmias</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                <b>Mechanism:</b> Structural myocyte death reduces cardiac ejection fraction (systolic/diastolic heart failure), while conduction defects cause atrial fibrillation.<br><br>
+                <b>Clinical Implication:</b> Elevates peripheral edema and substantially increases systemic thromboembolism risk.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with st.form("doctor_booking_form"):
-        f_col1, f_col2 = st.columns(2)
+# Tab 3: Symptoms
+with active_tab[2]:
+    st.markdown("""
+    <div class="content-box">
+        <h2 style="color:#0f172a; margin-top:0;">Recognizing Warning Signs & Symptom Classifications</h2>
+        <p style="color:#475569;">Timely triage and clinical identification of chest discomfort reduce myocardial necrosis and improve long-term functional recovery.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-        with f_col1:
-            pat_name = st.text_input("Patient Full Name *", placeholder="e.g. John Doe")
-            pat_email = st.text_input("Email Address *", placeholder="e.g. john.doe@example.com")
-            pat_phone = st.text_input("Phone Number *", placeholder="e.g. +1 555-019-2834")
-            selected_doctor = st.selectbox(
-                "Select Cardiologist *",
-                [
-                    "Dr. Rajesh Kumar, MD (Interventional Cardiology)",
-                    "Dr. Sarah Jenkins, MD (Preventive Cardiology & Lipids)",
-                    "Dr. Emily Chen, MD (Cardiac Electrophysiology & Arrhythmia)"
-                ]
-            )
+    sym_c1, sym_c2 = st.columns(2)
+    with sym_c1:
+        st.markdown("""
+        <div class="content-box">
+            <h4 style="color:#e11d48;">🚨 Common Physical Indicators</h4>
+            <ul style="color:#334155; line-height:1.9; font-size:0.92rem;">
+                <li><b>Central Retrosternal Pressure:</b> Crushing, heavy tightness behind the breastbone lasting longer than 5 minutes.</li>
+                <li><b>Pain Radiation Pathways:</b> Discomfort traveling along sensory dermatomes to the left shoulder, inner arm, jaw, or scapula.</li>
+                <li><b>Dyspnea:</b> Unexplained shortness of breath on mild exertion or when lying flat (orthopnea).</li>
+                <li><b>Cold Diaphoresis:</b> Sudden cold sweats accompanied by ashen pallor without physical exertion.</li>
+                <li><b>Atypical Female Signs:</b> Pronounced fatigue, epigastric heartburn sensations, sleep disturbance, and dizziness.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-        with f_col2:
-            consult_mode = st.radio("Consultation Type *", ["💻 Virtual Telehealth (Video Call)", "🏥 In-Person Hospital Visit"])
-            today = datetime.date.today()
-            pref_date = st.date_input("Preferred Appointment Date *", min_value=today, value=today + datetime.timedelta(days=1))
-            time_slot = st.selectbox(
-                "Preferred Time Slot *",
-                [
-                    "09:00 AM - 10:00 AM",
-                    "10:30 AM - 11:30 AM",
-                    "01:30 PM - 02:30 PM",
-                    "03:00 PM - 04:00 PM",
-                    "05:00 PM - 06:00 PM"
-                ]
-            )
-            urgency = st.selectbox("Urgency Level", ["Routine Checkup", "Recent High Risk Assessment", "Experiencing Discomfort"])
+    with sym_c2:
+        st.markdown("""
+        <div class="content-box">
+            <h4 style="color:#0284c7;">🔍 Clinical Chest Pain Types</h4>
+            <ul style="color:#334155; line-height:1.9; font-size:0.92rem;">
+                <li><b>Typical Angina (TA):</b> Exertion-provoked retrosternal discomfort promptly relieved within minutes by rest or sublingual nitroglycerin.</li>
+                <li><b>Atypical Angina (ATA):</b> Exertional discomfort exhibiting non-standard features like sharp burning, prominent dyspnea, or nausea.</li>
+                <li><b>Non-Anginal Pain (NAP):</b> Aches stemming from musculoskeletal (costochondritis), gastrointestinal (GERD), or pulmonary causes.</li>
+                <li><b>Asymptomatic (ASY):</b> Complete absence of chest discomfort; frequent in diabetic individuals with autonomic nerve degradation.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
-        symptoms_notes = st.text_area("Symptoms / Medical History Notes", placeholder="Briefly describe any chest discomfort, palpitations, family history, or medications...")
-        share_summary = st.checkbox("Attach my latest risk assessment results from this session to the doctor's file.", value=True)
+# Tab 4: Risk Prediction
+with active_tab[3]:
+    st.markdown("""
+    <div class="content-box">
+        <h2 style="color:#0f172a; margin-top:0;">Algorithmic Risk Stratification & Model Metrics</h2>
+        <p style="color:#475569;">Multivariable classification algorithms cross-reference baseline vitals, laboratory metabolic panels, and exercise stress ECG signals.</p>
+        
+        <table style="width:100%; text-align:left; border-collapse:collapse; margin-top:1.5rem; font-size:0.95rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid #cbd5e1; color:#0f172a;">
+                    <th style="padding:10px 0;">Marker</th>
+                    <th style="padding:10px 0;">Optimal Range</th>
+                    <th style="padding:10px 0;">Borderline Risk</th>
+                    <th style="padding:10px 0;">Elevated Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding:10px 0;"><b>Resting Blood Pressure</b></td>
+                    <td>&lt; 120/80 mm Hg</td>
+                    <td>120–129 / &lt; 80 mm Hg</td>
+                    <td>≥ 130/80 mm Hg</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding:10px 0;"><b>Serum Cholesterol</b></td>
+                    <td>&lt; 200 mg/dL</td>
+                    <td>200–239 mg/dL</td>
+                    <td>≥ 240 mg/dL</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding:10px 0;"><b>Fasting Blood Sugar</b></td>
+                    <td>&lt; 100 mg/dL</td>
+                    <td>100–125 mg/dL</td>
+                    <td>≥ 126 mg/dL</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px 0;"><b>ST Segment Depression</b></td>
+                    <td>0.0 mm (Upsloping)</td>
+                    <td>0.5 – 1.0 mm (Flat)</td>
+                    <td>&gt; 1.5 mm (Downsloping)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
 
-        submit_booking = st.form_submit_button("📅 Confirm & Book Appointment", use_container_width=True)
+# Tab 5: Prevention
+with active_tab[4]:
+    st.markdown("""
+    <div class="content-box">
+        <h2 style="color:#0f172a; margin-top:0;">Evidence-Based Prevention & Risk Mitigation</h2>
+        <p style="color:#475569;">Up to 80% of premature cardiovascular disease can be averted by implementing cardioprotective behavioral interventions.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    if submit_booking:
-        if not pat_name.strip():
-            st.error("Please provide the patient's full name.")
-        elif not pat_email.strip() and not pat_phone.strip():
-            st.error("Please provide at least an email address or phone number for confirmation.")
-        else:
-            ref_id = f"CARDIO-{random.randint(1000, 9999)}"
-            booking_record = {
-                "ref_id": ref_id,
-                "patient_name": pat_name,
-                "email": pat_email,
-                "phone": pat_phone,
-                "doctor": selected_doctor,
-                "mode": consult_mode,
-                "date": str(pref_date),
-                "time": time_slot,
-                "urgency": urgency,
-                "notes": symptoms_notes,
-                "attached_assessment": share_summary,
-                "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            }
-            st.session_state.booked_appointments.append(booking_record)
+    prev_c1, prev_c2, prev_c3 = st.columns(3)
+    with prev_c1:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>🥗 Cardioprotective Nutrition</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                • Prioritize Mediterranean and DASH dietary patterns.<br>
+                • Consume extra virgin olive oil, walnuts, and cold-water fatty fish (rich in EPA/DHA).<br>
+                • Eliminate trans-fatty acids and ultra-processed snacks.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-            st.markdown(f"""
-                <div class="confirm-box">
-                    <div class="confirm-title">✅ Consultation Successfully Booked!</div>
-                    <p><b>Booking Reference:</b> <code>{ref_id}</code></p>
-                    <p><b>Patient:</b> {pat_name} &nbsp;|&nbsp; <b>Contact:</b> {pat_email or pat_phone}</p>
-                    <p><b>Physician:</b> {selected_doctor}</p>
-                    <p><b>Date & Time:</b> {pref_date.strftime('%B %d, %Y')} at {time_slot}</p>
-                    <p><b>Mode:</b> {consult_mode}</p>
-                    <p style="margin-top: 10px; font-size: 0.9rem; color: #065f46;">
-                        ℹ️ A confirmation link with instructions and meeting details has been dispatched. 
-                        Please have your recent blood test records or ECG tracings ready prior to the visit.
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
-            st.balloons()
+    with prev_c2:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>🏃 Exercise Prescription</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                • At least 150 minutes of moderate aerobic training weekly.<br>
+                • Incorporate resistance training twice weekly to enhance muscle glucose uptake.<br>
+                • Avoid prolonged sedentary intervals with hourly micro-walks.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    # View Previous Bookings
-    if st.session_state.booked_appointments:
-        with st.expander("📋 View Confirmed Appointments in Current Session", expanded=False):
-            for b in reversed(st.session_state.booked_appointments):
-                st.markdown(f"**Ref: `{b['ref_id']}`** — {b['doctor']} on **{b['date']}** at **{b['time']}** ({b['mode']}) for *{b['patient_name']}*")
+    with prev_c3:
+        st.markdown("""
+        <div class="content-box" style="height:100%;">
+            <h4>🛡️ Vascular Risk Factor Control</h4>
+            <p style="font-size:0.88rem; color:#475569;">
+                • Total smoking cessation (halves risk within 12 months).<br>
+                • Limit dietary sodium intake to under 2,000 mg/day.<br>
+                • Maintain 7–8 hours of uninterrupted sleep to avoid nocturnal hypertension.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Tab 6: About
+with active_tab[5]:
+    st.markdown("""
+    <div class="content-box">
+        <h2 style="color:#0f172a; margin-top:0;">About CardioCare Intelligence</h2>
+        <p style="color:#475569;">
+            This web application is a clinical decision-support and educational screening system developed with Streamlit and Scikit-Learn. It leverages supervised machine learning models to assess non-linear cardiovascular risk parameters from standardized cardiac datasets.
+        </p>
+        <p style="font-size:0.85rem; color:#64748b; margin-top:1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+            ⚕️ <b>Clinical Disclaimer:</b> The predictions, probability scores, and indicators rendered by this platform are algorithmic approximations intended solely for screening and educational presentation. They do not replace formal clinical diagnosis or physician oversight.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Footer
+st.markdown("""
+<div class="clinical-footer">
+    A healthier heart leads to a brighter future ♡
+</div>
+""", unsafe_allow_html=True)
