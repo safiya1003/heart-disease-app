@@ -245,6 +245,13 @@ def get_model_assets():
     return model, scaler, columns
 
 model, scaler, expected_columns = get_model_assets()
+
+# Modal Dialog Functions
+@st.dialog("🩺 Cardiovascular Assessment Diagnostic")
+def open_prediction_dialog():
+    st.caption("Enter clinical markers below to evaluate cardiac health status:")
+    d1, d2 = st.columns(2)
+    with d1:
         age_in = st.slider("Age (Years)", 18, 100, 42)
         sex_in = st.selectbox("Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female")
         cp_in = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"])
