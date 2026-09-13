@@ -211,8 +211,21 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 # Safe Loader for Model Assets
+# Safe Loader for Model Assets
+@st.cache_resource
+def get_model_assets():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, "RF_KNN_heart.pkl")
+    scaler_path = os.path.join(base_dir, "scaler.pkl")
+    columns_path = os.path.join(base_dir, "columns.pkl")
+
+    model = joblib.load(model_path) if os.path.exists(model_path) else None
+    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
+    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
+    return model, scaler, columns
+
+model, scaler, expected_columns = get_model_assets()
 @st.cache_resource
 def get_model_assets():
     base_dir = os.path.dirname(os.path.abspath(__file__))
