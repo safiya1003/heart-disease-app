@@ -212,31 +212,27 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 # Safe Loader for Model Assets
-# Safe Loader for Model Assets
 @st.cache_resource
 def get_model_assets():
     import os
     import joblib
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    
     possible_dirs = [
         base_dir,
         os.getcwd(),
         os.path.join(base_dir, "heart-disease-app"),
-        os.path.join(os.getcwd(), "heart-disease-app")
+        os.path.join(os.getcwd(), "heart-disease-app"),
     ]
 
     def find_file(filename):
         for d in possible_dirs:
-            full = os.path.join(d, filename)
-            if os.path.exists(full):
-                return full
+            p = os.path.join(d, filename)
+            if os.path.exists(p):
+                return p
         return None
 
-    m_path = (find_file("RF_KNN_heart.pkl") or 
-              find_file("RF_heart.pkl") or 
-              find_file("KNN_heart.pkl"))
+    m_path = find_file("RF_KNN_heart.pkl") or find_file("RF_heart.pkl") or find_file("KNN_heart.pkl")
     s_path = find_file("scaler.pkl")
     c_path = find_file("columns.pkl")
 
