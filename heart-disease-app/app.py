@@ -218,30 +218,13 @@ def get_model_assets():
     import joblib
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    possible_dirs = [
-        base_dir,
-        os.getcwd(),
-        os.path.join(base_dir, "heart-disease-app"),
-        os.path.join(os.getcwd(), "heart-disease-app"),
-    ]
+    model_path = os.path.join(base_dir, "RF_KNN_heart.pkl")
+    scaler_path = os.path.join(base_dir, "scaler.pkl")
+    columns_path = os.path.join(base_dir, "columns.pkl")
 
-    def find_file(filename):
-        for d in possible_dirs:
-            p = os.path.join(d, filename)
-            if os.path.exists(p):
-                return p
-        return None
-
-    m_path = (find_file("RF_KNN_heart.pkl") or 
-              find_file("RF_heart.pkl") or 
-              find_file("KNN_heart.pkl"))
-    s_path = find_file("scaler.pkl")
-    c_path = find_file("columns.pkl")
-
-    model = joblib.load(m_path) if m_path else None
-    scaler = joblib.load(s_path) if s_path else None
-    columns = joblib.load(c_path) if c_path else None
-
+    model = joblib.load(model_path) if os.path.exists(model_path) else None
+    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
+    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
     return model, scaler, columns
 
 model, scaler, expected_columns = get_model_assets()
@@ -264,9 +247,7 @@ def open_prediction_dialog():
         ang_in = st.selectbox("Exercise Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No")
         slope_in = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
         oldpeak_in = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0)
-
-    if st.button("Run AI Risk Evaluation", use_container_width=True):
-        if model and scaler and expected_columns:
+        if model is not None and scaler is not None and expected_columns is not None:
             raw_dict = {
                 'Age': age_in, 'RestingBP': rbp_in, 'Cholesterol': chol_in,
                 'FastingBS': fbs_in, 'MaxHR': mhr_in, 'Oldpeak': oldpeak_in,
