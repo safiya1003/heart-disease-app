@@ -215,32 +215,38 @@ st.markdown("""
 # Safe Loader for Model Assets
 @st.cache_resource
 def get_model_assets():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "RF_KNN_heart.pkl")
-    scaler_path = os.path.join(base_dir, "scaler.pkl")
-    columns_path = os.path.join(base_dir, "columns.pkl")
+    import os
+    import joblib
 
-    model = joblib.load(model_path) if os.path.exists(model_path) else None
-    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
-    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    possible_dirs = [
+        base_dir,
+        os.getcwd(),
+        os.path.join(base_dir, "heart-disease-app"),
+        os.path.join(os.getcwd(), "heart-disease-app")
+    ]
+
+    def find_file(filename):
+        for d in possible_dirs:
+            full = os.path.join(d, filename)
+            if os.path.exists(full):
+                return full
+        return None
+
+    m_path = (find_file("RF_KNN_heart.pkl") or 
+              find_file("RF_heart.pkl") or 
+              find_file("KNN_heart.pkl"))
+    s_path = find_file("scaler.pkl")
+    c_path = find_file("columns.pkl")
+
+    model = joblib.load(m_path) if m_path else None
+    scaler = joblib.load(s_path) if s_path else None
+    columns = joblib.load(c_path) if c_path else None
+
     return model, scaler, columns
 
 model, scaler, expected_columns = get_model_assets()
-@st.cache_resource
-def get_model_assets():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "base_dir")
-    scaler_path = os.path.join(base_dir, "scaler.pkl")
-    columns_path = os.path.join(base_dir, "columns.pkl")
-
-    model = joblib.load(model_path) if os.path.exists(model_path) else None
-    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
-    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
-    return model, scaler, columns
-model, scaler, expected_columns = get_model_assets()
-
-# Modal Dialog Functions
-@st.dialog("🩺 Cardiovascular Assessment Diagnostic")
 def open_prediction_dialog():
     st.caption("Enter clinical markers below to evaluate cardiac health status:")
     d1, d2 = st.columns(2)
