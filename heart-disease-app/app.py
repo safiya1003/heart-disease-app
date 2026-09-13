@@ -211,12 +211,14 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 # Safe Loader for Model Assets
 @st.cache_resource
 def get_model_assets():
+    import os
+    import joblib
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "base_dir")
+    model_path = os.path.join(base_dir, "RF_KNN_heart.pkl")
     scaler_path = os.path.join(base_dir, "scaler.pkl")
     columns_path = os.path.join(base_dir, "columns.pkl")
 
@@ -224,6 +226,7 @@ def get_model_assets():
     scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
     columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
     return model, scaler, columns
+
 model, scaler, expected_columns = get_model_assets()
 
 # Modal Dialog Functions
@@ -244,9 +247,7 @@ def open_prediction_dialog():
         ang_in = st.selectbox("Exercise Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No")
         slope_in = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
         oldpeak_in = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0)
-
-    if st.button("Run AI Risk Evaluation", use_container_width=True):
-        if model and scaler and expected_columns:
+        if model is not None and scaler is not None and expected_columns is not None:
             raw_dict = {
                 'Age': age_in, 'RestingBP': rbp_in, 'Cholesterol': chol_in,
                 'FastingBS': fbs_in, 'MaxHR': mhr_in, 'Oldpeak': oldpeak_in,
@@ -255,24 +256,20 @@ def open_prediction_dialog():
                 'ST_Slope_' + slope_in: 1
             }
             df = pd.DataFrame([raw_dict])
-            for col in expected_columns:
-                if col not in df.columns:
-                    df[col] = 0
-            df = df[expected_columns]
-            scaled_df = scaler.transform(df)
-            pred = model.predict(scaled_df)[0]
-            proba = model.predict_proba(scaled_df)[0][1] if hasattr(model, "predict_proba") else None
+        for col in expected_columns:
+            if col not in df.columns:
+                df[col] = 0
+        df = df[expected_columns]
+        scaled_df = scaler.transform(df)
+        pred = model.predict(scaled_df)[0]
+        proba = model.predict_proba(scaled_df)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
 
-            if pred == 1:
-                st.error("⚠️ Elevated Risk Detected: Parameters indicate potential cardiovascular abnormalities.")
-            else:
-                st.success("✅ Normal Range: Parameters are within healthy cardiovascular bounds.")
-
-            if proba is not None:
-                st.progress(float(proba), text=f"Predicted Probability: {proba * 100:.1f}%")
+        if pred == 1:
+            st.error(f"⚠️ **Elevated Risk Detected** (Confidence: {proba*100:.1f}%)")
+            st.warning("Clinical markers suggest high risk for cardiac anomalies. Please consult a healthcare professional.")
         else:
-            st.info(f"Evaluation complete for {age_in}-year-old ({sex_in}). Place .pkl model files in the project folder for live inference.")
-
+            st.success(f"✅ **Normal Range: Low Risk** (Confidence: {(1 - proba)*100:.1f}%)")
+            st.info("Clinical markers indicate normal parameters.")
 @st.dialog("❤️ Comprehensive Guide: Heart Disease", width="large")
 def show_heart_disease_modal():
     c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
@@ -653,53 +650,71 @@ with active_tab[2]:
             </ul>
         </div>
         """, unsafe_allow_html=True)
-
 # Tab 4: Risk Prediction
 with active_tab[3]:
     st.markdown("""
     <div class="content-box">
         <h2 style="color:#0f172a; margin-top:0;">Algorithmic Risk Stratification & Model Metrics</h2>
-        <p style="color:#475569;">Multivariable classification algorithms cross-reference baseline vitals, laboratory metabolic panels, and exercise stress ECG signals.</p>
-        
-        <table style="width:100%; text-align:left; border-collapse:collapse; margin-top:1.5rem; font-size:0.95rem;">
-            <thead>
-                <tr style="border-bottom: 2px solid #cbd5e1; color:#0f172a;">
-                    <th style="padding:10px 0;">Marker</th>
-                    <th style="padding:10px 0;">Optimal Range</th>
-                    <th style="padding:10px 0;">Borderline Risk</th>
-                    <th style="padding:10px 0;">Elevated Risk</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding:10px 0;"><b>Resting Blood Pressure</b></td>
-                    <td>&lt; 120/80 mm Hg</td>
-                    <td>120–129 / &lt; 80 mm Hg</td>
-                    <td>≥ 130/80 mm Hg</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding:10px 0;"><b>Serum Cholesterol</b></td>
-                    <td>&lt; 200 mg/dL</td>
-                    <td>200–239 mg/dL</td>
-                    <td>≥ 240 mg/dL</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding:10px 0;"><b>Fasting Blood Sugar</b></td>
-                    <td>&lt; 100 mg/dL</td>
-                    <td>100–125 mg/dL</td>
-                    <td>≥ 126 mg/dL</td>
-                </tr>
-                <tr>
-                    <td style="padding:10px 0;"><b>ST Segment Depression</b></td>
-                    <td>0.0 mm (Upsloping)</td>
-                    <td>0.5 – 1.0 mm (Flat)</td>
-                    <td>&gt; 1.5 mm (Downsloping)</td>
-                </tr>
-            </tbody>
-        </table>
+        <p style="color:#475569;">Enter patient physiological indicators to calculate risk probability against supervised ML benchmarks.</p>
     </div>
     """, unsafe_allow_html=True)
 
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        t_age = st.slider("Patient Age (Years)", 18, 100, 48, key="tab_age")
+        t_sex = st.selectbox("Biological Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female", key="tab_sex")
+        t_cp = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"], key="tab_cp")
+        t_rbp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 220, 130, key="tab_rbp")
+        t_chol = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 220, key="tab_chol")
+
+    with col_t2:
+        t_fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No", key="tab_fbs")
+        t_ecg = st.selectbox("Resting ECG Result", ["Normal", "ST", "LVH"], key="tab_ecg")
+        t_mhr = st.slider("Maximum Heart Rate Achieved (bpm)", 60, 220, 145, key="tab_mhr")
+        t_ang = st.selectbox("Exercise-Induced Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No", key="tab_ang")
+        t_slope = st.selectbox("Peak Exercise ST Slope", ["Up", "Flat", "Down"], key="tab_slope")
+        t_oldpeak = st.slider("ST Depression (Oldpeak)", 0.0, 6.0, 1.2, key="tab_oldpeak")
+
+    if st.button("Evaluate Stratified Cardiac Risk", use_container_width=True, key="tab_predict_btn"):
+        if model is not None and scaler is not None and expected_columns is not None:
+            tab_raw = {
+                'Age': t_age, 'RestingBP': t_rbp, 'Cholesterol': t_chol,
+                'FastingBS': t_fbs, 'MaxHR': t_mhr, 'Oldpeak': t_oldpeak,
+                'Sex_' + t_sex: 1, 'ChestPainType_' + t_cp: 1,
+                'RestingECG_' + t_ecg: 1, 'ExerciseAngina_' + t_ang: 1,
+                'ST_Slope_' + t_slope: 1
+            }
+            tab_df = pd.DataFrame([tab_raw])
+            for col in expected_columns:
+                if col not in tab_df.columns:
+                    tab_df[col] = 0
+            tab_df = tab_df[expected_columns]
+            
+            scaled_input = scaler.transform(tab_df)
+            tab_pred = model.predict(scaled_input)[0]
+            
+            if hasattr(model, "predict_proba"):
+                prob_arr = model.predict_proba(scaled_input)[0]
+                risk_p = prob_arr[1] * 100
+                safe_p = prob_arr[0] * 100
+            else:
+                risk_p = 100.0 if tab_pred == 1 else 0.0
+                safe_p = 100.0 - risk_p
+
+            res_c1, res_c2 = st.columns(2)
+            with res_c1:
+                st.metric(label="Risk Probability", value=f"{risk_p:.1f}%")
+            with res_c2:
+                st.metric(label="Calculated Health Score", value=f"{safe_p:.1f}%")
+
+            if tab_pred == 1:
+                st.error("⚠️ **High Risk of Cardiovascular Pathology**")
+                st.write("Patient markers correlate strongly with elevated coronary risk factors. Early diagnostic stress testing and clinical follow-up are advised.")
+            else:
+                st.success("✅ **Low Risk / Within Expected Physiological Range**")
+                st.write("All submitted markers fall inside manageable statistical baseline ranges.")
+        else:
+            st.warning("Model pipeline assets are currently unavailable. Ensure model files are saved in the project repository.")
 # Tab 5: Prevention
 with active_tab[4]:
     st.markdown("""
