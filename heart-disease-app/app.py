@@ -4,6 +4,10 @@ import joblib
 import os
 import streamlit.components.v1 as components
 
+# ============================================================
+# PAGE CONFIGURATION
+# ============================================================
+
 st.set_page_config(
     page_title="Heart Disease Prediction | Better Insights • Healthier Tomorrows",
     page_icon="❤️",
@@ -11,969 +15,1923 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Design & Grid Styling
+# ============================================================
+# CUSTOM CSS
+# ============================================================
+
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-    html, body, [class*="css"], .stApp {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background-color: #fcfdfe;
-        color: #1e293b;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-    .block-container {
-        padding-top: 1.2rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 1240px !important;
-    }
+html, body, [class*="css"], .stApp {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    background-color: #fcfdfe;
+    color: #1e293b;
+}
 
-    [data-testid="stSidebarNav"], footer, header {
-        display: none !important;
-    }
+.block-container {
+    padding-top: 1.2rem !important;
+    padding-bottom: 2rem !important;
+    max-width: 1240px !important;
+}
 
-    .top-navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem 0 1.2rem 0;
-        border-bottom: 1px solid #e2e8f0;
-        margin-bottom: 1.5rem;
-    }
-    .brand-group {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .brand-icon {
-        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-        color: white;
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28);
-    }
-    .brand-title {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-    .brand-sub {
-        margin: 0;
-        font-size: 0.78rem;
-        color: #64748b;
-        font-weight: 500;
-    }
+[data-testid="stSidebarNav"],
+footer,
+header {
+    display: none !important;
+}
 
-    .hero-badge {
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #64748b;
-        margin-bottom: 0.75rem;
-    }
-    .hero-title-dark {
-        font-size: 3.4rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1.1;
-        margin: 0;
-    }
-    .hero-title-red {
-        font-size: 3.4rem;
-        font-weight: 800;
-        color: #e11d48;
-        line-height: 1.1;
-        margin: 0 0 1.2rem 0;
-    }
-    .hero-description {
-        font-size: 1.05rem;
-        color: #475569;
-        line-height: 1.6;
-        margin-bottom: 1.8rem;
-    }
+/* ============================================================
+   NAVBAR
+   ============================================================ */
 
-    div.stButton > button {
-        background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 26px !important;
-        padding: 0.5rem 1.4rem !important;
-        font-weight: 700 !important;
-        font-size: 0.88rem !important;
-        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25) !important;
-        transition: all 0.25s ease-in-out !important;
-    }
-    div.stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 22px rgba(225, 29, 72, 0.35) !important;
-    }
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0 1.2rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
 
-    .features-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.2rem;
-        margin: 2.2rem 0;
-    }
-    .feature-item {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 1.1rem 1.2rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-    .feature-circle {
-        width: 46px;
-        height: 46px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-        flex-shrink: 0;
-    }
-    .feature-txt h5 {
-        margin: 0;
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    .feature-txt p {
-        margin: 2px 0 0 0;
-        font-size: 0.77rem;
-        color: #64748b;
-    }
+.brand-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
-    .section-title-wrap {
-        margin: 2.5rem 0 1.2rem 0;
-    }
-    .section-title-wrap h3 {
-        margin: 0;
-        font-size: 1.35rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-    .section-title-wrap p {
-        margin: 0.3rem 0 0 0;
-        font-size: 0.85rem;
-        color: #64748b;
-    }
+.brand-icon {
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28);
+}
 
-    .topic-tile {
-        border-radius: 16px;
-        padding: 1.1rem 1rem;
-        border: 1px solid rgba(0,0,0,0.03);
-        margin-bottom: 0.5rem;
-    }
-    .topic-tile-icon {
-        font-size: 1.35rem;
-        margin-bottom: 0.4rem;
-    }
-    .topic-tile h4 {
-        margin: 0 0 0.3rem 0;
-        font-size: 0.92rem;
-        font-weight: 700;
-        color: #0f172a;
-    }
-    .topic-tile p {
-        margin: 0;
-        font-size: 0.76rem;
-        color: #64748b;
-        line-height: 1.4;
-    }
+.brand-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+}
 
-    .content-box {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 3px 12px rgba(0,0,0,0.03);
-    }
+.brand-sub {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 500;
+}
 
-    .clinical-footer {
-        background: #090e17;
-        color: #94a3b8;
-        padding: 1.6rem;
-        text-align: center;
-        font-size: 0.85rem;
-        border-radius: 18px;
-        margin-top: 3rem;
-        letter-spacing: 0.02em;
-    }
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.hero-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.hero-title-dark {
+    font-size: 3.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.hero-title-red {
+    font-size: 3.4rem;
+    font-weight: 800;
+    color: #e11d48;
+    line-height: 1.1;
+    margin: 0 0 1.2rem 0;
+}
+
+.hero-description {
+    font-size: 1.05rem;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 1.8rem;
+}
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+
+div.stButton > button {
+    background: linear-gradient(
+        135deg,
+        #e11d48 0%,
+        #be123c 100%
+    ) !important;
+
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 26px !important;
+    padding: 0.5rem 1.4rem !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+
+    box-shadow:
+        0 4px 14px rgba(225, 29, 72, 0.25) !important;
+
+    transition: all 0.25s ease-in-out !important;
+}
+
+div.stButton > button:hover {
+    transform: translateY(-2px) !important;
+
+    box-shadow:
+        0 8px 22px rgba(225, 29, 72, 0.35) !important;
+}
+
+/* ============================================================
+   FEATURE ROW
+   ============================================================ */
+
+.features-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+    margin: 2.2rem 0;
+}
+
+.feature-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.feature-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.feature-txt h5 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.feature-txt p {
+    margin: 2px 0 0 0;
+    font-size: 0.77rem;
+    color: #64748b;
+}
+
+/* ============================================================
+   SECTION TITLE
+   ============================================================ */
+
+.section-title-wrap {
+    margin: 2.5rem 0 1.2rem 0;
+}
+
+.section-title-wrap h3 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.section-title-wrap p {
+    margin: 0.3rem 0 0 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+/* ============================================================
+   TOPIC CARDS
+   ============================================================ */
+
+.topic-tile {
+    border-radius: 16px;
+    padding: 1.1rem 1rem;
+    border: 1px solid rgba(0,0,0,0.03);
+    margin-bottom: 0.5rem;
+}
+
+.topic-tile-icon {
+    font-size: 1.35rem;
+    margin-bottom: 0.4rem;
+}
+
+.topic-tile h4 {
+    margin: 0 0 0.3rem 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.topic-tile p {
+    margin: 0;
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* ============================================================
+   CONTENT BOX
+   ============================================================ */
+
+.content-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.03);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.clinical-footer {
+    background: #090e17;
+    color: #94a3b8;
+    padding: 1.6rem;
+    text-align: center;
+    font-size: 0.85rem;
+    border-radius: 18px;
+    margin-top: 3rem;
+    letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   ANIMATED HEART
+   ============================================================ */
+
+.heart-animation-wrapper {
+    width: 100%;
+    margin-top: 10px;
+}
+
 </style>
 """, unsafe_allow_html=True)
-# Safe Loader for Model Assets
+
+
+# ============================================================
+# LOAD MODEL
+# ============================================================
+
 @st.cache_resource
 def get_model_assets():
-    import os
-    import joblib
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(base_dir, "RF_KNN_heart.pkl")
-    scaler_path = os.path.join(base_dir, "scaler.pkl")
-    columns_path = os.path.join(base_dir, "columns.pkl")
 
-    model = joblib.load(model_path) if os.path.exists(model_path) else None
-    scaler = joblib.load(scaler_path) if os.path.exists(scaler_path) else None
-    columns = joblib.load(columns_path) if os.path.exists(columns_path) else None
+    model_path = os.path.join(
+        base_dir,
+        "RF_KNN_heart.pkl"
+    )
+
+    scaler_path = os.path.join(
+        base_dir,
+        "scaler.pkl"
+    )
+
+    columns_path = os.path.join(
+        base_dir,
+        "columns.pkl"
+    )
+
+    model = (
+        joblib.load(model_path)
+        if os.path.exists(model_path)
+        else None
+    )
+
+    scaler = (
+        joblib.load(scaler_path)
+        if os.path.exists(scaler_path)
+        else None
+    )
+
+    columns = (
+        joblib.load(columns_path)
+        if os.path.exists(columns_path)
+        else None
+    )
+
     return model, scaler, columns
+
 
 model, scaler, expected_columns = get_model_assets()
 
-# Modal Dialog Functions
+
+# ============================================================
+# PREDICTION DIALOG
+# ============================================================
+
 @st.dialog("🩺 Cardiovascular Assessment Diagnostic")
 def open_prediction_dialog():
-    st.caption("Enter clinical markers below to evaluate cardiac health status:")
+
+    st.caption(
+        "Enter clinical markers below to evaluate cardiac health status:"
+    )
+
     d1, d2 = st.columns(2)
+
     with d1:
-        age_in = st.slider("Age (Years)", 18, 100, 42)
-        sex_in = st.selectbox("Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female")
-        cp_in = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"])
-        rbp_in = st.number_input("Resting BP (mm Hg)", 80, 220, 120)
-        chol_in = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 205)
+
+        age_in = st.slider(
+            "Age (Years)",
+            18,
+            100,
+            42
+        )
+
+        sex_in = st.selectbox(
+            "Sex",
+            ["M", "F"],
+            format_func=lambda x:
+                "Male" if x == "M" else "Female"
+        )
+
+        cp_in = st.selectbox(
+            "Chest Pain Type",
+            ["ATA", "NAP", "ASY", "TA"]
+        )
+
+        rbp_in = st.number_input(
+            "Resting BP (mm Hg)",
+            80,
+            220,
+            120
+        )
+
+        chol_in = st.number_input(
+            "Serum Cholesterol (mg/dL)",
+            100,
+            600,
+            205
+        )
+
     with d2:
-        fbs_in = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No")
-        ecg_in = st.selectbox("Resting ECG", ["Normal", "ST", "LVH"])
-        mhr_in = st.slider("Max Heart Rate (bpm)", 60, 220, 150)
-        ang_in = st.selectbox("Exercise Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No")
-        slope_in = st.selectbox("ST Slope", ["Up", "Flat", "Down"])
-        oldpeak_in = st.slider("Oldpeak (ST Depression)", 0.0, 6.0, 1.0)
-        if model is not None and scaler is not None and expected_columns is not None:
-            raw_dict = {
-                'Age': age_in, 'RestingBP': rbp_in, 'Cholesterol': chol_in,
-                'FastingBS': fbs_in, 'MaxHR': mhr_in, 'Oldpeak': oldpeak_in,
-                'Sex_' + sex_in: 1, 'ChestPainType_' + cp_in: 1,
-                'RestingECG_' + ecg_in: 1, 'ExerciseAngina_' + ang_in: 1,
-                'ST_Slope_' + slope_in: 1
-            }
-            df = pd.DataFrame([raw_dict])
-        for col in expected_columns:
-            if col not in df.columns:
-                df[col] = 0
-        df = df[expected_columns]
+
+        fbs_in = st.selectbox(
+            "Fasting Blood Sugar > 120 mg/dL",
+            [0, 1],
+            format_func=lambda x:
+                "Yes" if x == 1 else "No"
+        )
+
+        ecg_in = st.selectbox(
+            "Resting ECG",
+            ["Normal", "ST", "LVH"]
+        )
+
+        mhr_in = st.slider(
+            "Max Heart Rate (bpm)",
+            60,
+            220,
+            150
+        )
+
+        ang_in = st.selectbox(
+            "Exercise Angina",
+            ["Y", "N"],
+            format_func=lambda x:
+                "Yes" if x == "Y" else "No"
+        )
+
+        slope_in = st.selectbox(
+            "ST Slope",
+            ["Up", "Flat", "Down"]
+        )
+
+        oldpeak_in = st.slider(
+            "Oldpeak (ST Depression)",
+            0.0,
+            6.0,
+            1.0
+        )
+
+    # --------------------------------------------------------
+    # MODEL CHECK
+    # --------------------------------------------------------
+
+    if (
+        model is None
+        or scaler is None
+        or expected_columns is None
+    ):
+
+        st.warning(
+            "Model files are not available. "
+            "Please make sure RF_KNN_heart.pkl, scaler.pkl "
+            "and columns.pkl are present."
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # CREATE INPUT
+    # --------------------------------------------------------
+
+    raw_dict = {
+        "Age": age_in,
+        "RestingBP": rbp_in,
+        "Cholesterol": chol_in,
+        "FastingBS": fbs_in,
+        "MaxHR": mhr_in,
+        "Oldpeak": oldpeak_in,
+
+        "Sex_" + sex_in: 1,
+        "ChestPainType_" + cp_in: 1,
+        "RestingECG_" + ecg_in: 1,
+        "ExerciseAngina_" + ang_in: 1,
+        "ST_Slope_" + slope_in: 1
+    }
+
+    df = pd.DataFrame([raw_dict])
+
+    # --------------------------------------------------------
+    # MATCH MODEL COLUMNS
+    # --------------------------------------------------------
+
+    for col in expected_columns:
+
+        if col not in df.columns:
+            df[col] = 0
+
+    df = df[expected_columns]
+
+    # --------------------------------------------------------
+    # SCALE + PREDICT
+    # --------------------------------------------------------
+
+    try:
+
         scaled_df = scaler.transform(df)
+
         pred = model.predict(scaled_df)[0]
-        proba = model.predict_proba(scaled_df)[0][1] if hasattr(model, "predict_proba") else (1.0 if pred == 1 else 0.0)
+
+        if hasattr(model, "predict_proba"):
+
+            proba = model.predict_proba(
+                scaled_df
+            )[0][1]
+
+        else:
+
+            proba = (
+                1.0
+                if pred == 1
+                else 0.0
+            )
+
+        # ----------------------------------------------------
+        # RESULT
+        # ----------------------------------------------------
 
         if pred == 1:
-            st.error(f"⚠️ **Elevated Risk Detected** (Confidence: {proba*100:.1f}%)")
-            st.warning("Clinical markers suggest high risk for cardiac anomalies. Please consult a healthcare professional.")
+
+            st.error(
+                f"⚠️ **Elevated Risk Detected** "
+                f"(Confidence: {proba * 100:.1f}%)"
+            )
+
+            st.warning(
+                "The model estimates elevated cardiovascular "
+                "risk from the entered parameters. "
+                "This prediction is for educational/project "
+                "purposes and is not a medical diagnosis."
+            )
+
         else:
-            st.success(f"✅ **Normal Range: Low Risk** (Confidence: {(1 - proba)*100:.1f}%)")
-            st.info("Clinical markers indicate normal parameters.")
-@st.dialog("❤️ Comprehensive Guide: Heart Disease", width="large")
+
+            st.success(
+                f"✅ **Lower Estimated Risk** "
+                f"(Confidence: {(1 - proba) * 100:.1f}%)"
+            )
+
+            st.info(
+                "The model estimates a lower cardiovascular "
+                "risk from the entered parameters. "
+                "This prediction is for educational/project "
+                "purposes and is not a medical diagnosis."
+            )
+
+    except Exception as e:
+
+        st.error(
+            "Prediction could not be completed."
+        )
+
+        st.exception(e)
+
+
+# ============================================================
+# INFORMATION MODALS
+# ============================================================
+
+@st.dialog("❤️ Heart Disease")
 def show_heart_disease_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&w=700&q=80", caption="Arterial Structure & Anatomy", use_container_width=True)
-        st.markdown("""
-        | Condition | Primary Focus |
-        | :--- | :--- |
-        | **CAD** | Coronary Arteries |
-        | **Arrhythmia** | Electrical Conduction |
-        | **Cardiomyopathy** | Ventricular Muscle |
-        """)
-    with c_txt:
-        st.markdown("#### Clinical Overview & Pathophysiology")
-        st.markdown("""
-        * **Atherosclerosis Initiation:** Starts with arterial lining damage, followed by LDL cholesterol calcification.
-        * **Coronary Artery Narrowing:** Plaque buildup restricts oxygenated blood delivery to heart tissues.
-        * **Ischemic Cascades:** Prolonged oxygen deprivation leads to cellular injury and potential myocardial infarction.
-        * **Global Mortality:** Cardiovascular conditions remain the leading global cause of death according to WHO data.
-        * **Genetic Risks:** Inherited lipoprotein levels and family history significantly elevate baseline risks.
-        * **Hypertension Impact:** Chronic high blood pressure strains heart chambers, inducing left ventricular hypertrophy.
-        * **Metabolic Syndrome:** Concomitant elevated glucose and high triglycerides accelerate arterial stiffness.
-        """)
 
-@st.dialog("⚠️ Clinical Symptoms & Early Warning Signs", width="large")
+    st.markdown("""
+    ### What is Heart Disease?
+
+    Heart disease refers to conditions that affect the heart
+    and cardiovascular system.
+
+    Common types include:
+
+    - Coronary artery disease
+    - Heart rhythm problems
+    - Heart valve disease
+    - Heart failure
+
+    Early awareness of risk factors can support better
+    health decisions.
+    """)
+
+    st.markdown("""
+    **Common risk factors**
+
+    - High blood pressure
+    - High cholesterol
+    - Diabetes
+    - Smoking
+    - Physical inactivity
+    - Family history
+    """)
+
+
+@st.dialog("⚠️ Symptoms")
 def show_symptoms_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=700&q=80", caption="Clinical Symptom Triage", use_container_width=True)
-        st.markdown("""
-        | Angina Class | Clinical Description |
-        | :--- | :--- |
-        | **Typical (TA)** | Pressure relieved with rest |
-        | **Atypical (ATA)** | Dyspnea, fatigue, nausea |
-        | **Silent (ASY)** | Painless ischemia in diabetics |
-        """)
-    with c_txt:
-        st.markdown("#### Common Warning Signs & Variants")
-        st.markdown("""
-        * **Substernal Pressure:** Squeezing discomfort or heavy tightness centered in the chest.
-        * **Referred Pain Pathways:** Discomfort spreading outward to the neck, jaw, shoulder, or left arm.
-        * **Exertional Dyspnea:** Unexplained shortness of breath during light daily activity or rest.
-        * **Cold Diaphoresis:** Clammy, sudden cold sweat occurring independently of room temperature.
-        * **Female Presentation:** Women frequently exhibit atypical signs such as nausea, dizziness, or indigestion.
-        * **Silent Ischemia:** Diabetic neuropathy can mask typical pain cues entirely.
-        * **Syncope & Presyncope:** Unexplained lightheadedness indicating poor cardiac perfusion.
-        """)
 
-@st.dialog("📊 Algorithmic Risk Stratification", width="large")
+    st.markdown("""
+    ### Common Warning Signs
+
+    Some commonly recognized symptoms may include:
+
+    - Chest discomfort
+    - Shortness of breath
+    - Unusual tiredness
+    - Dizziness
+    - Sweating
+    - Discomfort in the upper body
+
+    Symptoms can vary from person to person.
+    """)
+
+    st.info(
+        "If someone has severe or sudden symptoms, "
+        "seek urgent medical help."
+    )
+
+
+@st.dialog("📊 Risk Prediction")
 def show_risk_prediction_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=700&q=80", caption="Risk Stratification Analytics", use_container_width=True)
-        st.markdown("""
-        | Clinical Parameter | Baseline Target | Elevated Risk |
-        | :--- | :--- | :--- |
-        | **Blood Pressure** | < 120/80 mmHg | ≥ 130/80 mmHg |
-        | **Cholesterol** | < 200 mg/dL | ≥ 240 mg/dL |
-        | **ST Depression** | 0.0 mm | > 1.5 mm |
-        """)
-    with c_txt:
-        st.markdown("#### Machine Learning Analytics Architecture")
-        st.markdown("""
-        * **Multivariable Mapping:** Algorithms evaluate interconnected metrics across 11 key diagnostic markers.
-        * **Standardized Scaling:** Z-score normalization balances disparate units (blood pressure vs. heart rate).
-        * **Functional Capacity:** Maximum achieved heart rate provides insights into coronary reserve strength.
-        * **ST Wave Dynamics:** ST slope (Up, Flat, Down) and depression detect reversible myocardial strain.
-        * **Glycemic Risk:** Elevated fasting blood sugar (>120 mg/dL) shifts statistical weight upwards.
-        * **Classification Sensitivity:** Supervised KNN models prioritize high sensitivity to reduce false negatives.
-        * **Proactive Re-testing:** Periodic metric re-entry supports continuous preventive tracking.
-        """)
 
-@st.dialog("🩺 Diagnostic Pathways & Screenings", width="large")
+    st.markdown("""
+    ### How Risk Prediction Works
+
+    This project uses a machine-learning model to process
+    selected cardiovascular health parameters.
+
+    The model considers information such as:
+
+    - Age
+    - Sex
+    - Resting blood pressure
+    - Cholesterol
+    - Fasting blood sugar
+    - Maximum heart rate
+    - Chest pain type
+    - Resting ECG
+    - Exercise-induced angina
+    - ST slope
+    - Oldpeak
+    """)
+
+    st.info(
+        "The output is a machine-learning prediction and "
+        "should not be treated as a medical diagnosis."
+    )
+
+
+@st.dialog("🩺 Diagnosis")
 def show_diagnosis_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=700&q=80", caption="Cardiovascular Diagnostic Modalities", use_container_width=True)
-        st.markdown("""
-        | Modality | Diagnostic Utility |
-        | :--- | :--- |
-        | **12-Lead ECG** | Rhythm & ST abnormalities |
-        | **Echocardiogram** | Ejection fraction, chamber size |
-        | **Angiography** | Direct visual arterial stenosis |
-        """)
-    with c_txt:
-        st.markdown("#### Primary Diagnostic Modalities")
-        st.markdown("""
-        * **12-Lead ECG:** Real-time electrical waveform tracing identifying ischemia and rhythm disorders.
-        * **Cardiac Biomarkers:** Blood tests measuring Troponin I/T to detect acute heart muscle injury.
-        * **Echocardiography:** Non-invasive ultrasound measuring chamber wall motion and ejection fraction.
-        * **Stress Testing:** Monitored treadmill exercise evaluating cardiac responses to physical stress.
-        * **Coronary CT (CCTA):** High-resolution scans quantifying calcium deposits in arterial walls.
-        * **Coronary Angiography:** Gold-standard catheter procedure mapping exact blockage percentages.
-        * **Holter Monitoring:** Ambulatory continuous recording capturing sporadic palpitations over 24–48 hours.
-        """)
 
-@st.dialog("🛡️ Prevention & Risk Mitigation", width="large")
+    st.markdown("""
+    ### Clinical Screening
+
+    Healthcare professionals may use different methods
+    when evaluating cardiovascular health.
+
+    Examples include:
+
+    - Medical history
+    - Physical examination
+    - Blood tests
+    - ECG
+    - Stress testing
+    - Imaging tests
+
+    A qualified healthcare professional decides which
+    tests are appropriate.
+    """)
+
+
+@st.dialog("🛡️ Prevention")
 def show_prevention_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=700&q=80", caption="Preventive Lifestyle Interventions", use_container_width=True)
-        st.markdown("""
-        | Factor | Recommendation |
-        | :--- | :--- |
-        | **Aerobic Activity** | 150 min/week |
-        | **Sodium Intake** | < 2,000 mg/day |
-        | **Sleep Duration** | 7–8 hours/night |
-        """)
-    with c_txt:
-        st.markdown("#### Evidence-Based Interventions")
-        st.markdown("""
-        * **Mediterranean/DASH Diet:** Prioritize leafy greens, berries, legumes, olive oil, and omega-3s.
-        * **Sodium Control:** Keeping sodium below 2,000 mg per day reduces vessel wall tension and blood pressure.
-        * **Routine Exercise:** 30 minutes of daily moderate aerobic activity maintains vascular elasticity.
-        * **Smoking Cessation:** Halves personal cardiovascular event risks within one year of quitting.
-        * **Metabolic Tracking:** Maintaining healthy HbA1c and LDL cholesterol prevents plaque formation.
-        * **Adequate Sleep:** 7 to 8 hours of restorative sleep regulates nocturnal blood pressure dips.
-        * **Stress Management:** Controlled breathing and mindfulness exercises decrease chronic cortisol spikes.
-        """)
 
-@st.dialog("🌱 Heart Health & Everyday Habits", width="large")
+    st.markdown("""
+    ### Heart Health & Prevention
+
+    Helpful habits can include:
+
+    - Regular physical activity
+    - Balanced nutrition
+    - Avoiding tobacco
+    - Managing blood pressure
+    - Managing cholesterol
+    - Getting adequate sleep
+    - Regular health checkups
+    """)
+
+
+@st.dialog("🌱 Heart Health")
 def show_heart_health_modal():
-    c_img, c_txt = st.columns([1.1, 1.4], gap="medium")
-    with c_img:
-        st.image("https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=700&q=80", caption="Cardiovascular Wellness & Habits", use_container_width=True)
-        st.markdown("""
-        | Health Target | Recommended Target |
-        | :--- | :--- |
-        | **Resting Heart Rate** | 60–80 bpm |
-        | **Body Mass Index** | 18.5–24.9 kg/m² |
-        | **Daily Water Intake** | 2.5–3.0 Liters |
-        """)
-    with c_txt:
-        st.markdown("#### Practical Wellness Principles")
-        st.markdown("""
-        * **Resting Heart Rate:** Lower resting rates indicate efficient stroke volume and muscle conditioning.
-        * **Soluble Fiber:** Daily intake of oats, beans, and seeds helps reduce intestinal cholesterol absorption.
-        * **Omega-3 Fatty Acids:** Consuming fatty fish twice weekly supports healthy cell membrane fluidity.
-        * **Resistance Training:** Performing moderate strength training twice weekly enhances insulin sensitivity.
-        * **Consistent Hydration:** Drinking 2 to 3 liters of water daily helps maintain optimal blood viscosity.
-        * **Limiting Alcohol:** Avoiding excessive alcohol consumption reduces arrhythmia and cardiomyopathy risks.
-        * **Annual Checkups:** Consistent blood pressure monitoring and lipid profiling ensure early detection.
-        """)
 
-# Main Header & Navigation
+    st.markdown("""
+    ### Healthy Heart Habits
+
+    Small consistent habits can support cardiovascular
+    health.
+
+    Focus on:
+
+    **Healthy Food**
+
+    Include a balanced variety of nutritious foods.
+
+    **Physical Activity**
+
+    Stay physically active according to your abilities.
+
+    **Stress Management**
+
+    Make time for rest and healthy ways to manage stress.
+
+    **Regular Checkups**
+
+    Discuss health concerns with a qualified healthcare
+    professional.
+    """)
+
+
+# ============================================================
+# NAVBAR
+# ============================================================
+
 st.markdown("""
 <div class="top-navbar">
+
     <div class="brand-group">
-        <div class="brand-icon">📈</div>
-        <div class="brand-text">
-            <h2 class="brand-title">Heart Disease Prediction</h2>
-            <p class="brand-sub">Better insights • Healthier Tomorrows</p>
+
+        <div class="brand-icon">
+            📈
         </div>
+
+        <div class="brand-text">
+
+            <h2 class="brand-title">
+                Heart Disease Prediction
+            </h2>
+
+            <p class="brand-sub">
+                Better insights • Healthier Tomorrows
+            </p>
+
+        </div>
+
     </div>
+
 </div>
 """, unsafe_allow_html=True)
 
+
+# ============================================================
+# TABS
+# ============================================================
+
 active_tab = st.tabs([
-    "🏠 Home", "♡ Heart Disease", "⚠️ Symptoms", "📊 Risk Prediction", "🛡️ Prevention", "ⓘ About"
+    "🏠 Home",
+    "♡ Heart Disease",
+    "⚠️ Symptoms",
+    "📊 Risk Prediction",
+    "🛡️ Prevention",
+    "ⓘ About"
 ])
 
-# Tab 1: Home
+
+# ============================================================
+# HOME TAB
+# ============================================================
+
 with active_tab[0]:
-    hero_col1, hero_col2 = st.columns([1.1, 1], gap="large")
+
+    hero_col1, hero_col2 = st.columns(
+        [1.1, 1],
+        gap="large"
+    )
+
+    # --------------------------------------------------------
+    # LEFT SIDE
+    # --------------------------------------------------------
 
     with hero_col1:
+
         st.markdown("""
         <div style="margin-top: 1.5rem;">
-            <div class="hero-badge">AI-POWERED HEALTHCARE SOLUTION</div>
-            <h1 class="hero-title-dark">Heart Disease</h1>
-            <h1 class="hero-title-red">Prediction</h1>
+
+            <div class="hero-badge">
+                AI-POWERED HEALTHCARE SOLUTION
+            </div>
+
+            <h1 class="hero-title-dark">
+                Heart Disease
+            </h1>
+
+            <h1 class="hero-title-red">
+                Prediction
+            </h1>
+
             <p class="hero-description">
                 Understand your heart. Predict the risk.<br>
                 Take control of your health.
             </p>
+
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("♡ Start Prediction →", key="btn_hero_start"):
+        if st.button(
+            "♡ Start Prediction →",
+            key="btn_hero_start"
+        ):
+
             open_prediction_dialog()
-with hero_col2:
-    components.html("""
+
+    # --------------------------------------------------------
+    # RIGHT SIDE
+    # ONLY THIS PART IS ANIMATED
+    # --------------------------------------------------------
+
+    with hero_col2:
+
+        components.html("""
         <!DOCTYPE html>
+
         <html>
+
         <head>
+
         <style>
-            body {
-                margin: 0;
-                background: transparent;
-                font-family: Arial, sans-serif;
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: Arial, sans-serif;
+        }
+
+        .monitor {
+
+            position: relative;
+
+            width: 100%;
+            height: 380px;
+
+            border-radius: 28px;
+
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(225,29,72,0.12),
+                    transparent 55%
+                ),
+                linear-gradient(
+                    145deg,
+                    #fff1f2,
+                    #ffffff
+                );
+
+            border: 1px solid #fecdd3;
+
+            box-shadow:
+                0 18px 45px
+                rgba(225,29,72,0.13);
+
+        }
+
+
+        /* PULSING HEART */
+
+        .heart {
+
+            position: absolute;
+
+            top: 48px;
+
+            left: 50%;
+
+            transform:
+                translateX(-50%);
+
+            font-size: 90px;
+
+            z-index: 5;
+
+            animation:
+                heartbeat 1s infinite;
+
+            filter:
+                drop-shadow(
+                    0 10px 20px
+                    rgba(225,29,72,0.30)
+                );
+
+        }
+
+
+        @keyframes heartbeat {
+
+            0% {
+                transform:
+                    translateX(-50%)
+                    scale(1);
             }
 
-            .monitor {
-                position: relative;
-                width: 100%;
-                height: 380px;
-                border-radius: 28px;
-                overflow: hidden;
-                background: linear-gradient(145deg, #fff1f2, #ffffff);
-                border: 1px solid #fecdd3;
-                box-shadow: 0 18px 45px rgba(225,29,72,0.13);
+            15% {
+                transform:
+                    translateX(-50%)
+                    scale(1.18);
             }
 
-            .heart {
-                position: absolute;
-                top: 55px;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 95px;
-                animation: beat 1s infinite;
+            30% {
+                transform:
+                    translateX(-50%)
+                    scale(1);
             }
 
-            @keyframes beat {
-                0%, 100% {
-                    transform: translateX(-50%) scale(1);
-                }
-                15% {
-                    transform: translateX(-50%) scale(1.2);
-                }
-                30% {
-                    transform: translateX(-50%) scale(1);
-                }
-                45% {
-                    transform: translateX(-50%) scale(1.12);
-                }
-                60% {
-                    transform: translateX(-50%) scale(1);
-                }
+            45% {
+                transform:
+                    translateX(-50%)
+                    scale(1.12);
             }
 
-            .bpm {
-                position: absolute;
-                right: 20px;
-                top: 20px;
-                background: white;
-                padding: 10px 16px;
-                border-radius: 14px;
-                text-align: center;
-                box-shadow: 0 5px 20px rgba(0,0,0,.08);
+            60% {
+                transform:
+                    translateX(-50%)
+                    scale(1);
             }
 
-            .number {
-                color: #e11d48;
-                font-size: 25px;
-                font-weight: bold;
+            100% {
+                transform:
+                    translateX(-50%)
+                    scale(1);
             }
 
-            .label {
-                color: #64748b;
-                font-size: 10px;
-                font-weight: bold;
+        }
+
+
+        /* PULSE RINGS */
+
+        .ring {
+
+            position: absolute;
+
+            width: 150px;
+            height: 150px;
+
+            border-radius: 50%;
+
+            border:
+                2px solid
+                rgba(225,29,72,0.20);
+
+            left: 50%;
+
+            top: 35px;
+
+            transform:
+                translateX(-50%);
+
+            animation:
+                pulse 2.5s infinite;
+
+        }
+
+
+        .ring2 {
+            animation-delay: 0.8s;
+        }
+
+        .ring3 {
+            animation-delay: 1.6s;
+        }
+
+
+        @keyframes pulse {
+
+            0% {
+
+                transform:
+                    translateX(-50%)
+                    scale(0.7);
+
+                opacity: 0.8;
+
             }
 
-            .ecg {
-                position: absolute;
-                left: 6%;
-                right: 6%;
-                bottom: 60px;
-                height: 100px;
-                background: white;
-                border: 1px solid #fecdd3;
-                border-radius: 14px;
-                overflow: hidden;
+            100% {
+
+                transform:
+                    translateX(-50%)
+                    scale(1.8);
+
+                opacity: 0;
+
             }
 
-            .track {
-                display: flex;
-                width: 200%;
-                height: 100%;
-                animation: move 3s linear infinite;
+        }
+
+
+        /* BPM */
+
+        .bpm {
+
+            position: absolute;
+
+            right: 22px;
+            top: 20px;
+
+            background: white;
+
+            padding:
+                10px 16px;
+
+            border-radius: 14px;
+
+            text-align: center;
+
+            box-shadow:
+                0 5px 20px
+                rgba(0,0,0,0.08);
+
+            z-index: 10;
+
+        }
+
+
+        .bpm-number {
+
+            color: #e11d48;
+
+            font-size: 25px;
+
+            font-weight: 800;
+
+        }
+
+
+        .bpm-label {
+
+            color: #64748b;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            letter-spacing: 1px;
+
+        }
+
+
+        /* ECG BOX */
+
+        .ecg {
+
+            position: absolute;
+
+            left: 6%;
+            right: 6%;
+
+            bottom: 58px;
+
+            height: 100px;
+
+            background:
+                rgba(255,255,255,0.92);
+
+            border:
+                1px solid #fecdd3;
+
+            border-radius: 14px;
+
+            overflow: hidden;
+
+        }
+
+
+        .ecg-track {
+
+            display: flex;
+
+            width: 200%;
+
+            height: 100%;
+
+            animation:
+                moveECG 3s linear infinite;
+
+        }
+
+
+        .ecg svg {
+
+            width: 50%;
+
+            height: 100%;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .ecg-line {
+
+            fill: none;
+
+            stroke: #e11d48;
+
+            stroke-width: 4;
+
+            stroke-linecap: round;
+
+            stroke-linejoin: round;
+
+            filter:
+                drop-shadow(
+                    0 0 5px
+                    rgba(225,29,72,0.45)
+                );
+
+        }
+
+
+        @keyframes moveECG {
+
+            from {
+                transform:
+                    translateX(0);
             }
 
-            svg {
-                width: 50%;
-                height: 100%;
-                flex-shrink: 0;
+            to {
+                transform:
+                    translateX(-50%);
             }
 
-            polyline {
-                fill: none;
-                stroke: #e11d48;
-                stroke-width: 4;
-                stroke-linecap: round;
-                stroke-linejoin: round;
-            }
+        }
 
-            @keyframes move {
-                from {
-                    transform: translateX(0);
-                }
-                to {
-                    transform: translateX(-50%);
-                }
-            }
 
-            .status {
-                position: absolute;
-                bottom: 18px;
-                left: 50%;
-                transform: translateX(-50%);
-                color: #be123c;
-                background: white;
-                border: 1px solid #fecdd3;
-                border-radius: 20px;
-                padding: 6px 14px;
-                font-size: 10px;
-                font-weight: bold;
-                white-space: nowrap;
-            }
+        /* LIVE STATUS */
+
+        .status {
+
+            position: absolute;
+
+            bottom: 16px;
+
+            left: 50%;
+
+            transform:
+                translateX(-50%);
+
+            color: #be123c;
+
+            background: white;
+
+            border:
+                1px solid #fecdd3;
+
+            border-radius: 20px;
+
+            padding:
+                6px 14px;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 1px;
+
+            white-space: nowrap;
+
+        }
+
         </style>
+
         </head>
+
 
         <body>
 
         <div class="monitor">
 
-            <div class="heart">❤️</div>
+
+            <div class="ring"></div>
+
+            <div class="ring ring2"></div>
+
+            <div class="ring ring3"></div>
+
+
+            <div class="heart">
+                ❤️
+            </div>
+
 
             <div class="bpm">
-                <div class="number" id="bpm">72</div>
-                <div class="label">BPM</div>
+
+                <div
+                    class="bpm-number"
+                    id="bpm">
+                    72
+                </div>
+
+                <div class="bpm-label">
+                    BPM
+                </div>
+
             </div>
+
 
             <div class="ecg">
-                <div class="track">
+
+                <div class="ecg-track">
+
 
                     <svg viewBox="0 0 800 160">
-                        <polyline points="
-                        0,80 100,80
-                        140,80 155,80
-                        165,35 175,125 185,80
-                        230,80 300,80
-                        340,80 355,35 365,125 375,80
-                        420,80 500,80
-                        540,80 555,35 565,125 575,80
-                        620,80 700,80
-                        740,80 755,35 765,125 775,80
-                        800,80"/>
+
+                        <polyline
+                            class="ecg-line"
+                            points="
+                            0,80
+                            80,80
+                            120,80
+                            140,80
+                            155,80
+                            165,35
+                            175,125
+                            185,80
+                            220,80
+                            260,80
+                            300,80
+                            320,80
+                            335,80
+                            345,35
+                            355,125
+                            365,80
+                            400,80
+                            440,80
+                            480,80
+                            500,80
+                            515,80
+                            525,35
+                            535,125
+                            545,80
+                            580,80
+                            620,80
+                            660,80
+                            680,80
+                            695,80
+                            705,35
+                            715,125
+                            725,80
+                            760,80
+                            800,80
+                            "
+                        />
+
                     </svg>
 
+
                     <svg viewBox="0 0 800 160">
-                        <polyline points="
-                        0,80 100,80
-                        140,80 155,80
-                        165,35 175,125 185,80
-                        230,80 300,80
-                        340,80 355,35 365,125 375,80
-                        420,80 500,80
-                        540,80 555,35 565,125 575,80
-                        620,80 700,80
-                        740,80 755,35 765,125 775,80
-                        800,80"/>
+
+                        <polyline
+                            class="ecg-line"
+                            points="
+                            0,80
+                            80,80
+                            120,80
+                            140,80
+                            155,80
+                            165,35
+                            175,125
+                            185,80
+                            220,80
+                            260,80
+                            300,80
+                            320,80
+                            335,80
+                            345,35
+                            355,125
+                            365,80
+                            400,80
+                            440,80
+                            480,80
+                            500,80
+                            515,80
+                            525,35
+                            535,125
+                            545,80
+                            580,80
+                            620,80
+                            660,80
+                            680,80
+                            695,80
+                            705,35
+                            715,125
+                            725,80
+                            760,80
+                            800,80
+                            "
+                        />
+
                     </svg>
+
 
                 </div>
+
             </div>
+
 
             <div class="status">
                 ● LIVE HEART MONITOR
             </div>
 
+
         </div>
+
 
         <script>
-            let bpm = 72;
-            let direction = 1;
 
-            setInterval(function() {
-                bpm += direction;
+        let bpm = 72;
 
-                if (bpm >= 75) {
-                    direction = -1;
-                }
+        let direction = 1;
 
-                if (bpm <= 70) {
-                    direction = 1;
-                }
 
-                document.getElementById("bpm").innerText = bpm;
-            }, 700);
+        setInterval(function() {
+
+            bpm += direction;
+
+
+            if (bpm >= 75) {
+                direction = -1;
+            }
+
+
+            if (bpm <= 70) {
+                direction = 1;
+            }
+
+
+            document.getElementById(
+                "bpm"
+            ).innerText = bpm;
+
+        }, 700);
+
         </script>
 
+
         </body>
+
         </html>
+
         """, height=390, scrolling=False)
-    # 4 Feature Badges
+
+
+    # ========================================================
+    # FEATURE BOXES
+    # ========================================================
+
     st.markdown("""
     <div class="features-row">
+
         <div class="feature-item">
-            <div class="feature-circle" style="background:#e0f2fe; color:#0284c7;">⚡</div>
-            <div class="feature-txt">
-                <h5>Machine Learning</h5>
-                <p>Powered Predictions</p>
+
+            <div
+                class="feature-circle"
+                style="
+                    background:#fff1f2;
+                    color:#e11d48;
+                ">
+                🤖
             </div>
+
+            <div class="feature-txt">
+
+                <h5>
+                    Machine Learning
+                </h5>
+
+                <p>
+                    Powered Predictions
+                </p>
+
+            </div>
+
         </div>
+
+
         <div class="feature-item">
-            <div class="feature-circle" style="background:#dcfce7; color:#16a34a;">🛡️</div>
-            <div class="feature-txt">
-                <h5>Accurate Results</h5>
-                <p>Based on Real Data</p>
+
+            <div
+                class="feature-circle"
+                style="
+                    background:#f0fdf4;
+                    color:#16a34a;
+                ">
+                🛡️
             </div>
+
+            <div class="feature-txt">
+
+                <h5>
+                    Accurate Results
+                </h5>
+
+                <p>
+                    Based on Real Data
+                </p>
+
+            </div>
+
         </div>
+
+
         <div class="feature-item">
-            <div class="feature-circle" style="background:#f3e8ff; color:#9333ea;">⏱️</div>
-            <div class="feature-txt">
-                <h5>Quick & Easy</h5>
-                <p>Just a Few Steps</p>
+
+            <div
+                class="feature-circle"
+                style="
+                    background:#eff6ff;
+                    color:#2563eb;
+                ">
+                ⏱️
             </div>
+
+            <div class="feature-txt">
+
+                <h5>
+                    Quick &amp; Easy
+                </h5>
+
+                <p>
+                    Just a Few Steps
+                </p>
+
+            </div>
+
         </div>
+
+
         <div class="feature-item">
-            <div class="feature-circle" style="background:#ffe4e6; color:#e11d48;">❤️</div>
-            <div class="feature-txt">
-            <h5>Better Decisions</h5>
-                <p>For a Healthier Life</p>
+
+            <div
+                class="feature-circle"
+                style="
+                    background:#fff7ed;
+                    color:#ea580c;
+                ">
+                ❤️
             </div>
+
+            <div class="feature-txt">
+
+                <h5>
+                    Better Decisions
+                </h5>
+
+                <p>
+                    For a Healthier Life
+                </p>
+
+            </div>
+
         </div>
+
     </div>
     """, unsafe_allow_html=True)
+
+
+    # ========================================================
+    # EXPLORE MORE
+    # ========================================================
 
     st.markdown("""
     <div class="section-title-wrap">
-        <h3>📈 Explore More About Heart Health</h3>
-        <p>Learn about heart disease, its symptoms, risk factors and how you can prevent it.</p>
+
+        <h3>
+            📈 Explore More About Heart Health
+        </h3>
+
+        <p>
+            Learn about heart disease, its symptoms,
+            risk factors and how you can prevent it.
+        </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
 
-    with c1:
+    # ========================================================
+    # TOPIC CARDS
+    # ========================================================
+
+    topic_col1, topic_col2, topic_col3 = st.columns(3)
+
+
+    with topic_col1:
+
         st.markdown("""
-        <div class="topic-tile" style="background:#fff1f2; min-height:160px;">
-            <div class="topic-tile-icon">❤️</div>
-            <h4>Heart Disease</h4>
-            <p>What is heart disease, its types and clinical risks.</p>
+        <div
+            class="topic-tile"
+            style="
+                background:#fff1f2;
+            ">
+
+            <div class="topic-tile-icon">
+                ❤️
+            </div>
+
+            <h4>
+                Heart Disease
+            </h4>
+
+            <p>
+                What is heart disease,
+                its types and clinical risks.
+            </p>
+
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c1", use_container_width=True):
+
+        if st.button(
+            "Learn More →",
+            key="heart_disease_btn"
+        ):
             show_heart_disease_modal()
 
-    with c2:
-        st.markdown("""
-        <div class="topic-tile" style="background:#fefce8; min-height:160px;">
-            <div class="topic-tile-icon">⚠️</div>
-            <h4>Symptoms</h4>
-            <p>Know the warning signs, angina and silent cues.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c2", use_container_width=True):
-            show_symptoms_modal()
 
-    with c3:
         st.markdown("""
-        <div class="topic-tile" style="background:#f0f9ff; min-height:160px;">
-            <div class="topic-tile-icon">📊</div>
-            <h4>Risk Prediction</h4>
-            <p>How metrics calculate cardiovascular likelihood.</p>
+        <div
+            class="topic-tile"
+            style="
+                background:#eff6ff;
+            ">
+
+            <div class="topic-tile-icon">
+                📊
+            </div>
+
+            <h4>
+                Risk Prediction
+            </h4>
+
+            <p>
+                How metrics calculate
+                cardiovascular likelihood.
+            </p>
+
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c3", use_container_width=True):
+
+        if st.button(
+            "Explore →",
+            key="risk_prediction_btn"
+        ):
             show_risk_prediction_modal()
 
-    with c4:
-        st.markdown("""
-        <div class="topic-tile" style="background:#faf5ff; min-height:160px;">
-            <div class="topic-tile-icon">🩺</div>
-            <h4>Diagnosis</h4>
-            <p>How conditions are identified and clinically screened.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c4", use_container_width=True):
-            show_diagnosis_modal()
 
-    with c5:
+    with topic_col2:
+
         st.markdown("""
-        <div class="topic-tile" style="background:#f0fdf4; min-height:160px;">
-            <div class="topic-tile-icon">🛡️</div>
-            <h4>Prevention</h4>
-            <p>Guidelines and proactive steps for long-term health.</p>
+        <div
+            class="topic-tile"
+            style="
+                background:#fff7ed;
+            ">
+
+            <div class="topic-tile-icon">
+                ⚠️
+            </div>
+
+            <h4>
+                Symptoms
+            </h4>
+
+            <p>
+                Know the warning signs,
+                angina and silent cues.
+            </p>
+
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c5", use_container_width=True):
+
+        if st.button(
+            "Learn More →",
+            key="symptoms_btn"
+        ):
+            show_symptoms_modal()
+
+
+        st.markdown("""
+        <div
+            class="topic-tile"
+            style="
+                background:#f0fdf4;
+            ">
+
+            <div class="topic-tile-icon">
+                🛡️
+            </div>
+
+            <h4>
+                Prevention
+            </h4>
+
+            <p>
+                Guidelines and proactive steps
+                for long-term health.
+            </p>
+
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button(
+            "Learn More →",
+            key="prevention_btn"
+        ):
             show_prevention_modal()
 
-    with c6:
+
+    with topic_col3:
+
         st.markdown("""
-        <div class="topic-tile" style="background:#f0fdfa; min-height:160px;">
-            <div class="topic-tile-icon">🌱</div>
-            <h4>Heart Health</h4>
-            <p>Cardioprotective habits, diet and daily exercises.</p>
+        <div
+            class="topic-tile"
+            style="
+                background:#f5f3ff;
+            ">
+
+            <div class="topic-tile-icon">
+                🩺
+            </div>
+
+            <h4>
+                Diagnosis
+            </h4>
+
+            <p>
+                How conditions are identified
+                and clinically screened.
+            </p>
+
         </div>
         """, unsafe_allow_html=True)
-        if st.button("Learn more →", key="btn_c6", use_container_width=True):
+
+        if st.button(
+            "Learn More →",
+            key="diagnosis_btn"
+        ):
+            show_diagnosis_modal()
+
+
+        st.markdown("""
+        <div
+            class="topic-tile"
+            style="
+                background:#ecfdf5;
+            ">
+
+            <div class="topic-tile-icon">
+                🌱
+            </div>
+
+            <h4>
+                Heart Health
+            </h4>
+
+            <p>
+                Healthy habits for
+                long-term cardiovascular wellness.
+            </p>
+
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button(
+            "Learn More →",
+            key="health_btn"
+        ):
             show_heart_health_modal()
 
-# Tab 2: Heart Disease
+
+# ============================================================
+# HEART DISEASE TAB
+# ============================================================
+
 with active_tab[1]:
+
     st.markdown("""
-    <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">Understanding Cardiovascular Diseases (CVD)</h2>
-        <p style="color:#475569; font-size:1.05rem;">
-            Cardiovascular diseases represent a spectrum of structural and functional disorders affecting blood vessels and the heart muscle. Atherosclerosis—the arterial hardening caused by calcified lipid plaques—is the fundamental driver across most acute coronary events.
+    <div class="section-title-wrap">
+
+        <h3>
+            ❤️ Understanding Heart Disease
+        </h3>
+
+        <p>
+            Learn about cardiovascular disease
+            and common risk factors.
         </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    c_hd1, c_hd2, c_hd3 = st.columns(3)
-    with c_hd1:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>🫀 Coronary Artery Disease (CAD)</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                <b>Mechanism:</b> Gradual narrowing of the coronary arteries by cholesterol plaque diminishes myocardial perfusion.<br><br>
-                <b>Clinical Implication:</b> Results in stable angina during exercise or unstable acute coronary syndromes if the fibrous cap ruptures.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="content-box">
 
-    with c_hd2:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>🧠 Cerebrovascular Disease</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                <b>Mechanism:</b> Occlusion of carotid or cerebral vessels by thrombi causes ischemic strokes, while vessel ruptures induce intracranial hemorrhage.<br><br>
-                <b>Clinical Implication:</b> Rapid loss of neurological function requiring emergency thrombolytic intervention within a 4.5-hour therapeutic window.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        <h3>
+            What is Heart Disease?
+        </h3>
 
-    with c_hd3:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>⚡ Heart Failure & Arrhythmias</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                <b>Mechanism:</b> Structural myocyte death reduces cardiac ejection fraction (systolic/diastolic heart failure), while conduction defects cause atrial fibrillation.<br><br>
-                <b>Clinical Implication:</b> Elevates peripheral edema and substantially increases systemic thromboembolism risk.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        <p>
+            Heart disease is a general term used for conditions
+            that affect the heart and cardiovascular system.
+        </p>
 
-# Tab 3: Symptoms
+        <h4>
+            Common Risk Factors
+        </h4>
+
+        <ul>
+            <li>High blood pressure</li>
+            <li>High cholesterol</li>
+            <li>Diabetes</li>
+            <li>Smoking</li>
+            <li>Physical inactivity</li>
+            <li>Family history</li>
+        </ul>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ============================================================
+# SYMPTOMS TAB
+# ============================================================
+
 with active_tab[2]:
+
     st.markdown("""
-    <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">Recognizing Warning Signs & Symptom Classifications</h2>
-        <p style="color:#475569;">Timely triage and clinical identification of chest discomfort reduce myocardial necrosis and improve long-term functional recovery.</p>
+    <div class="section-title-wrap">
+
+        <h3>
+            ⚠️ Heart Disease Symptoms
+        </h3>
+
+        <p>
+            Understanding possible warning signs.
+        </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    sym_c1, sym_c2 = st.columns(2)
-    with sym_c1:
-        st.markdown("""
-        <div class="content-box">
-            <h4 style="color:#e11d48;">🚨 Common Physical Indicators</h4>
-            <ul style="color:#334155; line-height:1.9; font-size:0.92rem;">
-                <li><b>Central Retrosternal Pressure:</b> Crushing, heavy tightness behind the breastbone lasting longer than 5 minutes.</li>
-                <li><b>Pain Radiation Pathways:</b> Discomfort traveling along sensory dermatomes to the left shoulder, inner arm, jaw, or scapula.</li>
-                <li><b>Dyspnea:</b> Unexplained shortness of breath on mild exertion or when lying flat (orthopnea).</li>
-                <li><b>Cold Diaphoresis:</b> Sudden cold sweats accompanied by ashen pallor without physical exertion.</li>
-                <li><b>Atypical Female Signs:</b> Pronounced fatigue, epigastric heartburn sensations, sleep disturbance, and dizziness.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="content-box">
 
-    with sym_c2:
-        st.markdown("""
-        <div class="content-box">
-            <h4 style="color:#0284c7;">🔍 Clinical Chest Pain Types</h4>
-            <ul style="color:#334155; line-height:1.9; font-size:0.92rem;">
-                <li><b>Typical Angina (TA):</b> Exertion-provoked retrosternal discomfort promptly relieved within minutes by rest or sublingual nitroglycerin.</li>
-                <li><b>Atypical Angina (ATA):</b> Exertional discomfort exhibiting non-standard features like sharp burning, prominent dyspnea, or nausea.</li>
-                <li><b>Non-Anginal Pain (NAP):</b> Aches stemming from musculoskeletal (costochondritis), gastrointestinal (GERD), or pulmonary causes.</li>
-                <li><b>Asymptomatic (ASY):</b> Complete absence of chest discomfort; frequent in diabetic individuals with autonomic nerve degradation.</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-# Tab 4: Risk Prediction
+        <h3>
+            Common Symptoms
+        </h3>
+
+        <ul>
+            <li>Chest discomfort</li>
+            <li>Shortness of breath</li>
+            <li>Unusual tiredness</li>
+            <li>Dizziness</li>
+            <li>Sweating</li>
+            <li>Upper-body discomfort</li>
+        </ul>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ============================================================
+# RISK PREDICTION TAB
+# ============================================================
+
 with active_tab[3]:
+
     st.markdown("""
-    <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">Algorithmic Risk Stratification & Model Metrics</h2>
-        <p style="color:#475569;">Enter patient physiological indicators to calculate risk probability against supervised ML benchmarks.</p>
+    <div class="section-title-wrap">
+
+        <h3>
+            📊 Risk Prediction
+        </h3>
+
+        <p>
+            Machine-learning based cardiovascular
+            risk estimation.
+        </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    col_t1, col_t2 = st.columns(2)
-    with col_t1:
-        t_age = st.slider("Patient Age (Years)", 18, 100, 48, key="tab_age")
-        t_sex = st.selectbox("Biological Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female", key="tab_sex")
-        t_cp = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"], key="tab_cp")
-        t_rbp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 220, 130, key="tab_rbp")
-        t_chol = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 220, key="tab_chol")
+    st.markdown("""
+    <div class="content-box">
 
-    with col_t2:
-        t_fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No", key="tab_fbs")
-        t_ecg = st.selectbox("Resting ECG Result", ["Normal", "ST", "LVH"], key="tab_ecg")
-        t_mhr = st.slider("Maximum Heart Rate Achieved (bpm)", 60, 220, 145, key="tab_mhr")
-        t_ang = st.selectbox("Exercise-Induced Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No", key="tab_ang")
-        t_slope = st.selectbox("Peak Exercise ST Slope", ["Up", "Flat", "Down"], key="tab_slope")
-        t_oldpeak = st.slider("ST Depression (Oldpeak)", 0.0, 6.0, 1.2, key="tab_oldpeak")
+        <h3>
+            How the Model Works
+        </h3>
 
-    if st.button("Evaluate Stratified Cardiac Risk", use_container_width=True, key="tab_predict_btn"):
-        if model is not None and scaler is not None and expected_columns is not None:
-            tab_raw = {
-                'Age': t_age, 'RestingBP': t_rbp, 'Cholesterol': t_chol,
-                'FastingBS': t_fbs, 'MaxHR': t_mhr, 'Oldpeak': t_oldpeak,
-                'Sex_' + t_sex: 1, 'ChestPainType_' + t_cp: 1,
-                'RestingECG_' + t_ecg: 1, 'ExerciseAngina_' + t_ang: 1,
-                'ST_Slope_' + t_slope: 1
-            }
-            tab_df = pd.DataFrame([tab_raw])
-            for col in expected_columns:
-                if col not in tab_df.columns:
-                    tab_df[col] = 0
-            tab_df = tab_df[expected_columns]
-            
-            scaled_input = scaler.transform(tab_df)
-            tab_pred = model.predict(scaled_input)[0]
-            
-            if hasattr(model, "predict_proba"):
-                prob_arr = model.predict_proba(scaled_input)[0]
-                risk_p = prob_arr[1] * 100
-                safe_p = prob_arr[0] * 100
-            else:
-                risk_p = 100.0 if tab_pred == 1 else 0.0
-                safe_p = 100.0 - risk_p
+        <p>
+            The model processes selected cardiovascular
+            health parameters and produces a prediction.
+        </p>
 
-            res_c1, res_c2 = st.columns(2)
-            with res_c1:
-                st.metric(label="Risk Probability", value=f"{risk_p:.1f}%")
-            with res_c2:
-                st.metric(label="Calculated Health Score", value=f"{safe_p:.1f}%")
+        <ul>
+            <li>Age</li>
+            <li>Sex</li>
+            <li>Chest pain type</li>
+            <li>Resting blood pressure</li>
+            <li>Cholesterol</li>
+            <li>Fasting blood sugar</li>
+            <li>Resting ECG</li>
+            <li>Maximum heart rate</li>
+            <li>Exercise angina</li>
+            <li>ST slope</li>
+            <li>Oldpeak</li>
+        </ul>
 
-            if tab_pred == 1:
-                st.error("⚠️ **High Risk of Cardiovascular Pathology**")
-                st.write("Patient markers correlate strongly with elevated coronary risk factors. Early diagnostic stress testing and clinical follow-up are advised.")
-            else:
-                st.success("✅ **Low Risk / Within Expected Physiological Range**")
-                st.write("All submitted markers fall inside manageable statistical baseline ranges.")
-        else:
-            st.warning("Model pipeline assets are currently unavailable. Ensure model files are saved in the project repository.")
-# Tab 5: Prevention
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button(
+        "♡ Start Prediction",
+        key="risk_tab_prediction"
+    ):
+        open_prediction_dialog()
+
+
+# ============================================================
+# PREVENTION TAB
+# ============================================================
+
 with active_tab[4]:
+
     st.markdown("""
-    <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">Evidence-Based Prevention & Risk Mitigation</h2>
-        <p style="color:#475569;">Up to 80% of premature cardiovascular disease can be averted by implementing cardioprotective behavioral interventions.</p>
+    <div class="section-title-wrap">
+
+        <h3>
+            🛡️ Prevention
+        </h3>
+
+        <p>
+            Healthy habits that can support
+            cardiovascular health.
+        </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-    prev_c1, prev_c2, prev_c3 = st.columns(3)
-    with prev_c1:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>🥗 Cardioprotective Nutrition</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                • Prioritize Mediterranean and DASH dietary patterns.<br>
-                • Consume extra virgin olive oil, walnuts, and cold-water fatty fish (rich in EPA/DHA).<br>
-                • Eliminate trans-fatty acids and ultra-processed snacks.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown("""
+    <div class="content-box">
 
-    with prev_c2:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>🏃 Exercise Prescription</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                • At least 150 minutes of moderate aerobic training weekly.<br>
-                • Incorporate resistance training twice weekly to enhance muscle glucose uptake.<br>
-                • Avoid prolonged sedentary intervals with hourly micro-walks.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        <h3>
+            Healthy Heart Habits
+        </h3>
 
-    with prev_c3:
-        st.markdown("""
-        <div class="content-box" style="height:100%;">
-            <h4>🛡️ Vascular Risk Factor Control</h4>
-            <p style="font-size:0.88rem; color:#475569;">
-                • Total smoking cessation (halves risk within 12 months).<br>
-                • Limit dietary sodium intake to under 2,000 mg/day.<br>
-                • Maintain 7–8 hours of uninterrupted sleep to avoid nocturnal hypertension.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        <ul>
+            <li>Eat a balanced diet</li>
+            <li>Stay physically active</li>
+            <li>Avoid tobacco</li>
+            <li>Manage blood pressure</li>
+            <li>Manage cholesterol</li>
+            <li>Get enough sleep</li>
+            <li>Have regular health checkups</li>
+        </ul>
 
-# Tab 6: About
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ============================================================
+# ABOUT TAB
+# ============================================================
+
 with active_tab[5]:
+
     st.markdown("""
-    <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">About CardioCare Intelligence</h2>
-        <p style="color:#475569;">
-            This web application is a clinical decision-support and educational screening system developed with Streamlit and Scikit-Learn. It leverages supervised machine learning models to assess non-linear cardiovascular risk parameters from standardized cardiac datasets.
+    <div class="section-title-wrap">
+
+        <h3>
+            ⓘ About This Project
+        </h3>
+
+        <p>
+            Heart Disease Prediction Dashboard
         </p>
-        <p style="font-size:0.85rem; color:#64748b; margin-top:1rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
-            ⚕️ <b>Clinical Disclaimer:</b> The predictions, probability scores, and indicators rendered by this platform are algorithmic approximations intended solely for screening and educational presentation. They do not replace formal clinical diagnosis or physician oversight.
-        </p>
+
     </div>
     """, unsafe_allow_html=True)
 
-# Footer
+    st.markdown("""
+    <div class="content-box">
+
+        <h3>
+            ❤️ Heart Disease Prediction
+        </h3>
+
+        <p>
+            This project is a machine-learning powered
+            healthcare dashboard designed to estimate
+            cardiovascular risk from selected health
+            parameters.
+        </p>
+
+        <h4>
+            Project Features
+        </h4>
+
+        <ul>
+            <li>Interactive Streamlit interface</li>
+            <li>Machine-learning prediction</li>
+            <li>Health parameter input</li>
+            <li>Risk estimation</li>
+            <li>Heart-health educational information</li>
+        </ul>
+
+        <p>
+            This application is intended for educational
+            and project demonstration purposes and should
+            not replace professional medical advice.
+        </p>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
 st.markdown("""
 <div class="clinical-footer">
-    A healthier heart leads to a brighter future ♡
+
+    ❤️ Heart Disease Prediction Dashboard
+
+    <br><br>
+
+    Better Insights • Healthier Tomorrows
+
+    <br><br>
+
+    For educational and project demonstration purposes only.
+
 </div>
 """, unsafe_allow_html=True)
