@@ -452,289 +452,6 @@ with active_tab[0]:
         if st.button("♡ Start Prediction →", key="btn_hero_start"):
             open_prediction_dialog()
 
-    with hero_col2:
-    components.html(
-        """
-        <html>
-        <head>
-        <style>
-
-        body {
-            margin: 0;
-            background: transparent;
-            font-family: Arial, sans-serif;
-        }
-
-        .monitor {
-            position: relative;
-            width: 100%;
-            height: 380px;
-            border-radius: 28px;
-            overflow: hidden;
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(225,29,72,0.12),
-                    transparent 55%
-                ),
-                linear-gradient(
-                    145deg,
-                    #fff1f2,
-                    #ffffff
-                );
-            border: 1px solid #fecdd3;
-            box-shadow:
-                0 18px 45px rgba(225,29,72,0.13);
-        }
-
-        .heart {
-            position: absolute;
-            top: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 90px;
-            animation: heartbeat 1s infinite;
-            z-index: 5;
-        }
-
-        @keyframes heartbeat {
-
-            0% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            15% {
-                transform: translateX(-50%) scale(1.18);
-            }
-
-            30% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            45% {
-                transform: translateX(-50%) scale(1.12);
-            }
-
-            60% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            100% {
-                transform: translateX(-50%) scale(1);
-            }
-
-        }
-
-        .bpm {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            background: white;
-            padding: 10px 16px;
-            border-radius: 14px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,.08);
-        }
-
-        .number {
-            color: #e11d48;
-            font-size: 25px;
-            font-weight: bold;
-        }
-
-        .label {
-            color: #64748b;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .ecg {
-            position: absolute;
-            left: 6%;
-            right: 6%;
-            bottom: 58px;
-            height: 100px;
-            background: white;
-            border: 1px solid #fecdd3;
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .track {
-            display: flex;
-            width: 200%;
-            height: 100%;
-            animation: move 3s linear infinite;
-        }
-
-        svg {
-            width: 50%;
-            height: 100%;
-            flex-shrink: 0;
-        }
-
-        polyline {
-            fill: none;
-            stroke: #e11d48;
-            stroke-width: 4;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        @keyframes move {
-
-            from {
-                transform: translateX(0);
-            }
-
-            to {
-                transform: translateX(-50%);
-            }
-
-        }
-
-        .status {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #be123c;
-            background: white;
-            border: 1px solid #fecdd3;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 10px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        </style>
-        </head>
-
-        <body>
-
-        <div class="monitor">
-
-            <div class="heart">❤️</div>
-
-            <div class="bpm">
-                <div class="number" id="bpm">
-                    72
-                </div>
-
-                <div class="label">
-                    BPM
-                </div>
-            </div>
-
-            <div class="ecg">
-
-                <div class="track">
-
-                    <svg viewBox="0 0 800 160">
-
-                        <polyline points="
-                        0,80
-                        100,80
-                        140,80
-                        155,80
-                        165,35
-                        175,125
-                        185,80
-                        230,80
-                        300,80
-                        340,80
-                        355,35
-                        365,125
-                        375,80
-                        420,80
-                        500,80
-                        540,80
-                        555,35
-                        565,125
-                        575,80
-                        620,80
-                        700,80
-                        740,80
-                        755,35
-                        765,125
-                        775,80
-                        800,80
-                        "/>
-
-                    </svg>
-
-                    <svg viewBox="0 0 800 160">
-
-                        <polyline points="
-                        0,80
-                        100,80
-                        140,80
-                        155,80
-                        165,35
-                        175,125
-                        185,80
-                        230,80
-                        300,80
-                        340,80
-                        355,35
-                        365,125
-                        375,80
-                        420,80
-                        500,80
-                        540,80
-                        555,35
-                        565,125
-                        575,80
-                        620,80
-                        700,80
-                        740,80
-                        755,35
-                        765,125
-                        775,80
-                        800,80
-                        "/>
-
-                    </svg>
-
-                </div>
-
-            </div>
-
-            <div class="status">
-                ● LIVE HEART MONITOR
-            </div>
-
-        </div>
-
-        <script>
-
-        let bpm = 72;
-        let direction = 1;
-
-        setInterval(function() {
-
-            bpm += direction;
-
-            if (bpm >= 75) {
-                direction = -1;
-            }
-
-            if (bpm <= 70) {
-                direction = 1;
-            }
-
-            document.getElementById("bpm").innerText = bpm;
-
-        }, 700);
-
-        </script>
-
-        </body>
-        </html>
-        """,
-        height=390,
-        scrolling=False
     )
     # 4 Feature Badges
     st.markdown("""
@@ -746,6 +463,190 @@ with active_tab[0]:
                 <p>Powered Predictions</p>
             </div>
         </div>
+with hero_col2:
+    components.html(
+        """
+        <html>
+        <head
+        <style>
+        body {
+            margin: 0;
+            background: transparent;
+            font-family: Arial, sans-serif;
+        }
+
+        .monitor {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .heart {
+            font-size: 85px;
+            animation: heartbeat 1s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+
+        .bpm {
+            margin-top: 5px;
+        }
+
+        .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e11d48;
+        }
+
+        .label {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .ecg {
+            width: 100%;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .track {
+            display: flex;
+            width: 200%;
+            animation: move 3s linear infinite;
+        }
+
+        svg {
+            width: 50%;
+            height: 120px;
+        }
+
+        polyline {
+            fill: none;
+            stroke: #e11d48;
+            stroke-width: 4;
+        }
+
+        @keyframes move {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        .status {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #e11d48;
+            font-weight: bold;
+        }
+        </style>
+        </head>
+
+        <body>
+        <div class="monitor">
+
+            <div class="heart">❤️</div>
+
+            <div class="bpm">
+                <div class="number" id="bpm">72</div>
+                <div class="label">BPM</div>
+            </div>
+
+            <div class="ecg">
+                <div class="track">
+
+                    <svg viewBox="0 0 800 160">
+                        <polyline points="
+                        0,80
+                        100,80
+                        130,80
+                        150,40
+                        170,120
+                        190,80
+                        250,80
+                        280,80
+                        300,30
+                        320,130
+                        340,80
+                        420,80
+                        450,80
+                        470,40
+                        490,120
+                        510,80
+                        600,80
+                        630,80
+                        650,35
+                        670,125
+                        690,80
+                        800,80"/>
+                    </svg>
+
+                    <svg viewBox="0 0 800 160">
+                        <polyline points="
+                        0,80
+                        100,80
+                        130,80
+                        150,40
+                        170,120
+                        190,80
+                        250,80
+                        280,80
+                        300,30
+                        320,130
+                        340,80
+                        420,80
+                        450,80
+                        470,40
+                        490,120
+                        510,80
+                        600,80
+                        630,80
+                        650,35
+                        670,125
+                        690,80
+                        800,80"/>
+                    </svg>
+
+                </div>
+            </div>
+
+            <div class="status">● LIVE HEART MONITOR</div>
+
+        </div>
+
+        <script>
+        let bpm = 72;
+        let direction = 1;
+
+        setInterval(function() {
+            bpm += direction;
+
+            if (bpm >= 75) {
+                direction = -1;
+            }
+
+            if (bpm <= 70) {
+                direction = 1;
+            }
+
+            document.getElementById("bpm").innerText = bpm;
+        }, 700);
+        </script>
+
+        </body>
+        </html>
+        """,
+        height=390,
+        scrolling=False
+    )
         <div class="feature-item">
             <div class="feature-circle" style="background:#dcfce7; color:#16a34a;">🛡️</div>
             <div class="feature-txt">
