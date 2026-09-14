@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
-import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Heart Disease Prediction | Better Insights • Healthier Tomorrows",
@@ -451,288 +450,177 @@ with active_tab[0]:
 
         if st.button("♡ Start Prediction →", key="btn_hero_start"):
             open_prediction_dialog()
-
-    with hero_col2:
+with hero_col2:
     components.html("""
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: transparent;
-        }
-
-        .monitor {
-            position: relative;
-            width: 100%;
-            height: 380px;
-            border-radius: 28px;
-            overflow: hidden;
-            background:
-                radial-gradient(circle at center,
-                rgba(225,29,72,0.12),
-                transparent 55%),
-                linear-gradient(145deg,#fff1f2,#ffffff);
-
-            border: 1px solid #fecdd3;
-            box-shadow: 0 18px 45px rgba(225,29,72,0.13);
-        }
-
-        .heart {
-            position: absolute;
-            top: 55px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 95px;
-            animation: heartbeat 1s infinite;
-            filter: drop-shadow(0 10px 20px rgba(225,29,72,0.3));
-            z-index: 5;
-        }
-
-        @keyframes heartbeat {
-            0% {
-                transform: translateX(-50%) scale(1);
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+            body {
+                margin: 0;
+                background: transparent;
+                font-family: Arial, sans-serif;
             }
 
-            15% {
-                transform: translateX(-50%) scale(1.18);
+            .monitor {
+                position: relative;
+                width: 100%;
+                height: 380px;
+                border-radius: 28px;
+                overflow: hidden;
+                background: linear-gradient(145deg, #fff1f2, #ffffff);
+                border: 1px solid #fecdd3;
+                box-shadow: 0 18px 45px rgba(225,29,72,0.13);
             }
 
-            30% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            45% {
-                transform: translateX(-50%) scale(1.12);
-            }
-
-            60% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            100% {
-                transform: translateX(-50%) scale(1);
-            }
-        }
-
-        .ring {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 2px solid rgba(225,29,72,0.20);
-            left: 50%;
-            top: 35px;
-            transform: translateX(-50%);
-            animation: pulse 2.5s infinite;
-        }
-
-        .ring2 {
-            animation-delay: .8s;
-        }
-
-        .ring3 {
-            animation-delay: 1.6s;
-        }
-
-        @keyframes pulse {
-            0% {
-                transform: translateX(-50%) scale(.7);
-                opacity: .8;
-            }
-
-            100% {
-                transform: translateX(-50%) scale(1.8);
-                opacity: 0;
-            }
-        }
-
-        .bpm {
-            position: absolute;
-            right: 22px;
-            top: 20px;
-            background: white;
-            padding: 10px 16px;
-            border-radius: 14px;
-            box-shadow: 0 5px 20px rgba(0,0,0,.08);
-            text-align: center;
-            z-index: 10;
-        }
-
-        .bpm-number {
-            color: #e11d48;
-            font-size: 25px;
-            font-weight: 800;
-        }
-
-        .bpm-label {
-            color: #64748b;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .ecg {
-            position: absolute;
-            left: 6%;
-            right: 6%;
-            bottom: 55px;
-            height: 95px;
-            background: rgba(255,255,255,.9);
-            border: 1px solid #fecdd3;
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .ecg-track {
-            display: flex;
-            width: 200%;
-            height: 100%;
-            animation: moveECG 3s linear infinite;
-        }
-
-        .ecg svg {
-            width: 50%;
-            height: 100%;
-            flex-shrink: 0;
-        }
-
-        .line {
-            fill: none;
-            stroke: #e11d48;
-            stroke-width: 4;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            filter: drop-shadow(0 0 5px rgba(225,29,72,.45));
-        }
-
-        @keyframes moveECG {
-            from {
-                transform: translateX(0);
-            }
-
-            to {
+            .heart {
+                position: absolute;
+                top: 55px;
+                left: 50%;
                 transform: translateX(-50%);
+                font-size: 95px;
+                animation: beat 1s infinite;
             }
-        }
 
-        .status {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #be123c;
-            background: white;
-            border: 1px solid #fecdd3;
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            white-space: nowrap;
-        }
-    </style>
-    </head>
+            @keyframes beat {
+                0%, 100% {
+                    transform: translateX(-50%) scale(1);
+                }
+                15% {
+                    transform: translateX(-50%) scale(1.2);
+                }
+                30% {
+                    transform: translateX(-50%) scale(1);
+                }
+                45% {
+                    transform: translateX(-50%) scale(1.12);
+                }
+                60% {
+                    transform: translateX(-50%) scale(1);
+                }
+            }
 
-    <body>
+            .bpm {
+                position: absolute;
+                right: 20px;
+                top: 20px;
+                background: white;
+                padding: 10px 16px;
+                border-radius: 14px;
+                text-align: center;
+                box-shadow: 0 5px 20px rgba(0,0,0,.08);
+            }
+
+            .number {
+                color: #e11d48;
+                font-size: 25px;
+                font-weight: bold;
+            }
+
+            .label {
+                color: #64748b;
+                font-size: 10px;
+                font-weight: bold;
+            }
+
+            .ecg {
+                position: absolute;
+                left: 6%;
+                right: 6%;
+                bottom: 60px;
+                height: 100px;
+                background: white;
+                border: 1px solid #fecdd3;
+                border-radius: 14px;
+                overflow: hidden;
+            }
+
+            .track {
+                display: flex;
+                width: 200%;
+                height: 100%;
+                animation: move 3s linear infinite;
+            }
+
+            svg {
+                width: 50%;
+                height: 100%;
+                flex-shrink: 0;
+            }
+
+            polyline {
+                fill: none;
+                stroke: #e11d48;
+                stroke-width: 4;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+            }
+
+            @keyframes move {
+                from {
+                    transform: translateX(0);
+                }
+                to {
+                    transform: translateX(-50%);
+                }
+            }
+
+            .status {
+                position: absolute;
+                bottom: 18px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: #be123c;
+                background: white;
+                border: 1px solid #fecdd3;
+                border-radius: 20px;
+                padding: 6px 14px;
+                font-size: 10px;
+                font-weight: bold;
+                white-space: nowrap;
+            }
+        </style>
+        </head>
+
+        <body>
 
         <div class="monitor">
-
-            <div class="ring"></div>
-            <div class="ring ring2"></div>
-            <div class="ring ring3"></div>
 
             <div class="heart">❤️</div>
 
             <div class="bpm">
-                <div class="bpm-number" id="bpm">72</div>
-                <div class="bpm-label">BPM</div>
+                <div class="number" id="bpm">72</div>
+                <div class="label">BPM</div>
             </div>
 
             <div class="ecg">
-                <div class="ecg-track">
+                <div class="track">
 
                     <svg viewBox="0 0 800 160">
-                        <polyline class="line"
-                        points="
-                        0,80
-                        80,80
-                        120,80
-                        140,80
-                        155,80
-                        165,35
-                        175,125
-                        185,80
-                        220,80
-                        260,80
-                        300,80
-                        320,80
-                        335,80
-                        345,35
-                        355,125
-                        365,80
-                        400,80
-                        440,80
-                        480,80
-                        500,80
-                        515,80
-                        525,35
-                        535,125
-                        545,80
-                        580,80
-                        620,80
-                        660,80
-                        680,80
-                        695,80
-                        705,35
-                        715,125
-                        725,80
-                        760,80
+                        <polyline points="
+                        0,80 100,80
+                        140,80 155,80
+                        165,35 175,125 185,80
+                        230,80 300,80
+                        340,80 355,35 365,125 375,80
+                        420,80 500,80
+                        540,80 555,35 565,125 575,80
+                        620,80 700,80
+                        740,80 755,35 765,125 775,80
                         800,80"/>
                     </svg>
 
                     <svg viewBox="0 0 800 160">
-                        <polyline class="line"
-                        points="
-                        0,80
-                        80,80
-                        120,80
-                        140,80
-                        155,80
-                        165,35
-                        175,125
-                        185,80
-                        220,80
-                        260,80
-                        300,80
-                        320,80
-                        335,80
-                        345,35
-                        355,125
-                        365,80
-                        400,80
-                        440,80
-                        480,80
-                        500,80
-                        515,80
-                        525,35
-                        535,125
-                        545,80
-                        580,80
-                        620,80
-                        660,80
-                        680,80
-                        695,80
-                        705,35
-                        715,125
-                        725,80
-                        760,80
+                        <polyline points="
+                        0,80 100,80
+                        140,80 155,80
+                        165,35 175,125 185,80
+                        230,80 300,80
+                        340,80 355,35 365,125 375,80
+                        420,80 500,80
+                        540,80 555,35 565,125 575,80
+                        620,80 700,80
+                        740,80 755,35 765,125 775,80
                         800,80"/>
                     </svg>
 
@@ -750,7 +638,6 @@ with active_tab[0]:
             let direction = 1;
 
             setInterval(function() {
-
                 bpm += direction;
 
                 if (bpm >= 75) {
@@ -762,13 +649,12 @@ with active_tab[0]:
                 }
 
                 document.getElementById("bpm").innerText = bpm;
-
             }, 700);
         </script>
 
-    </body>
-    </html>
-    """, height=390, scrolling=False)
+        </body>
+        </html>
+        """, height=390, scrolling=False)
     # 4 Feature Badges
     st.markdown("""
     <div class="features-row">
