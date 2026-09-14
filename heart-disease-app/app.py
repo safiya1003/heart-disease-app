@@ -2,9 +2,11 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
+import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Heart Disease Prediction | Better Insights • Healthier Tomorrows",
+    page_titleimport streamlit as 
+    st ="Heart Disease Prediction | Better Insights • Healthier Tomorrows",
     page_icon="❤️",
     layout="wide",
     initial_sidebar_state="collapsed"
