@@ -452,22 +452,11 @@ with active_tab[0]:
         if st.button("♡ Start Prediction →", key="btn_hero_start"):
             open_prediction_dialog()
 
-    )
-    # 4 Feature Badges
-    st.markdown("""
-    <div class="features-row">
-        <div class="feature-item">
-            <div class="feature-circle" style="background:#e0f2fe; color:#0284c7;">⚡</div>
-            <div class="feature-txt">
-                <h5>Machine Learning</h5>
-                <p>Powered Predictions</p>
-            </div>
-        </div>
-with hero_col2:
-    components.html(
+    with hero_col2:
+        components.html(
         """
         <html>
-        <head
+        <head>
         <style>
         body {
             margin: 0;
@@ -551,6 +540,7 @@ with hero_col2:
         </head>
 
         <body>
+
         <div class="monitor">
 
             <div class="heart">❤️</div>
@@ -564,55 +554,11 @@ with hero_col2:
                 <div class="track">
 
                     <svg viewBox="0 0 800 160">
-                        <polyline points="
-                        0,80
-                        100,80
-                        130,80
-                        150,40
-                        170,120
-                        190,80
-                        250,80
-                        280,80
-                        300,30
-                        320,130
-                        340,80
-                        420,80
-                        450,80
-                        470,40
-                        490,120
-                        510,80
-                        600,80
-                        630,80
-                        650,35
-                        670,125
-                        690,80
-                        800,80"/>
+                        <polyline points="0,80 100,80 130,80 150,40 170,120 190,80 250,80 280,80 300,30 320,130 340,80 420,80 450,80 470,40 490,120 510,80 600,80 630,80 650,35 670,125 690,80 800,80"/>
                     </svg>
 
                     <svg viewBox="0 0 800 160">
-                        <polyline points="
-                        0,80
-                        100,80
-                        130,80
-                        150,40
-                        170,120
-                        190,80
-                        250,80
-                        280,80
-                        300,30
-                        320,130
-                        340,80
-                        420,80
-                        450,80
-                        470,40
-                        490,120
-                        510,80
-                        600,80
-                        630,80
-                        650,35
-                        670,125
-                        690,80
-                        800,80"/>
+                        <polyline points="0,80 100,80 130,80 150,40 170,120 190,80 250,80 280,80 300,30 320,130 340,80 420,80 450,80 470,40 490,120 510,80 600,80 630,80 650,35 670,125 690,80 800,80"/>
                     </svg>
 
                 </div>
@@ -647,6 +593,16 @@ with hero_col2:
         height=390,
         scrolling=False
     )
+    # 4 Feature Badges
+    st.markdown("""
+    <div class="features-row">
+        <div class="feature-item">
+            <div class="feature-circle" style="background:#e0f2fe; color:#0284c7;">⚡</div>
+            <div class="feature-txt">
+                <h5>Machine Learning</h5>
+                <p>Powered Predictions</p>
+            </div>
+        </div>
         <div class="feature-item">
             <div class="feature-circle" style="background:#dcfce7; color:#16a34a;">🛡️</div>
             <div class="feature-txt">
