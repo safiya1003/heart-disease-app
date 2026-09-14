@@ -18,7 +18,7 @@ st.markdown("""
 
     html, body, [class*="css"], .stApp {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background-color: #fcfdfe;
+        background-color: #fff5f7;
         color: #1e293b;
     }
 
