@@ -18,10 +18,9 @@ st.markdown("""
 
     html, body, [class*="css"], .stApp {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-        background-color: #fff5f7;
-        color: #1e293b;
+        background-color: #fff5f8;
+        color: #9C4561;
     }
-
     .block-container {
         padding-top: 1.2rem !important;
         padding-bottom: 2rem !important;
