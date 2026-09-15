@@ -783,71 +783,238 @@ with active_tab[2]:
             </ul>
         </div>
         """, unsafe_allow_html=True)
-# Tab 4: Risk Prediction
+        # Tab 4: Risk Prediction
 with active_tab[3]:
+
     st.markdown("""
     <div class="content-box">
-        <h2 style="color:#0f172a; margin-top:0;">Algorithmic Risk Stratification & Model Metrics</h2>
-        <p style="color:#475569;">Enter patient physiological indicators to calculate risk probability against supervised ML benchmarks.</p>
+        <h2 style="color:#0f172a; margin-top:0;">
+            Algorithmic Risk Stratification & Model Metrics
+        </h2>
+        <p style="color:#475569;">
+            Enter patient physiological indicators to calculate cardiovascular risk
+            using the trained machine learning model.
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
     col_t1, col_t2 = st.columns(2)
+
+    # LEFT SIDE
     with col_t1:
-        t_age = st.slider("Patient Age (Years)", 18, 100, 48, key="tab_age")
-        t_sex = st.selectbox("Biological Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female", key="tab_sex")
-        t_cp = st.selectbox("Chest Pain Type", ["ATA", "NAP", "ASY", "TA"], key="tab_cp")
-        t_rbp = st.number_input("Resting Blood Pressure (mm Hg)", 80, 220, 130, key="tab_rbp")
-        t_chol = st.number_input("Serum Cholesterol (mg/dL)", 100, 600, 220, key="tab_chol")
 
+        t_age = st.slider(
+            "Patient Age (Years)",
+            18, 100, 48,
+            key="tab_age"
+        )
+
+        t_sex = st.selectbox(
+            "Biological Sex",
+            ["M", "F"],
+            format_func=lambda x: "Male" if x == "M" else "Female",
+            key="tab_sex"
+        )
+
+        t_cp = st.selectbox(
+            "Chest Pain Type",
+            ["ATA", "NAP", "ASY", "TA"],
+            key="tab_cp"
+        )
+
+        t_rbp = st.number_input(
+            "Resting Blood Pressure (mm Hg)",
+            min_value=80,
+            max_value=220,
+            value=130,
+            key="tab_rbp"
+        )
+
+        t_chol = st.number_input(
+            "Serum Cholesterol (mg/dL)",
+            min_value=100,
+            max_value=600,
+            value=220,
+            key="tab_chol"
+        )
+
+    # RIGHT SIDE
     with col_t2:
-        t_fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x == 1 else "No", key="tab_fbs")
-        t_ecg = st.selectbox("Resting ECG Result", ["Normal", "ST", "LVH"], key="tab_ecg")
-        t_mhr = st.slider("Maximum Heart Rate Achieved (bpm)", 60, 220, 145, key="tab_mhr")
-        t_ang = st.selectbox("Exercise-Induced Angina", ["Y", "N"], format_func=lambda x: "Yes" if x == "Y" else "No", key="tab_ang")
-        t_slope = st.selectbox("Peak Exercise ST Slope", ["Up", "Flat", "Down"], key="tab_slope")
-        t_oldpeak = st.slider("ST Depression (Oldpeak)", 0.0, 6.0, 1.2, key="tab_oldpeak")
 
-    if st.button("Evaluate Stratified Cardiac Risk", use_container_width=True, key="tab_predict_btn"):
-        if model is not None and scaler is not None and expected_columns is not None:
+        t_fbs = st.selectbox(
+            "Fasting Blood Sugar > 120 mg/dL",
+            [0, 1],
+            format_func=lambda x: "Yes" if x == 1 else "No",
+            key="tab_fbs"
+        )
+
+        t_ecg = st.selectbox(
+            "Resting ECG Result",
+            ["Normal", "ST", "LVH"],
+            key="tab_ecg"
+        )
+
+        t_mhr = st.slider(
+            "Maximum Heart Rate Achieved (bpm)",
+            60, 220, 145,
+            key="tab_mhr"
+        )
+
+        t_ang = st.selectbox(
+            "Exercise-Induced Angina",
+            ["Y", "N"],
+            format_func=lambda x: "Yes" if x == "Y" else "No",
+            key="tab_ang"
+        )
+
+        t_slope = st.selectbox(
+            "Peak Exercise ST Slope",
+            ["Up", "Flat", "Down"],
+            key="tab_slope"
+        )
+
+        t_oldpeak = st.slider(
+            "ST Depression (Oldpeak)",
+            0.0, 6.0, 1.2,
+            key="tab_oldpeak"
+        )
+
+    # PREDICTION BUTTON
+    if st.button(
+        "❤️ Evaluate Cardiac Risk",
+        use_container_width=True,
+        key="tab_predict_btn"
+    ):
+
+        # Check model files
+        if model is None:
+            st.error("❌ Model file not found: RF_KNN_heart.pkl")
+            st.stop()
+
+        if scaler is None:
+            st.error("❌ Scaler file not found: scaler.pkl")
+            st.stop()
+
+        if expected_columns is None:
+            st.error("❌ Column file not found: columns.pkl")
+            st.stop()
+
+        try:
+
+            # Create patient input
             tab_raw = {
-                'Age': t_age, 'RestingBP': t_rbp, 'Cholesterol': t_chol,
-                'FastingBS': t_fbs, 'MaxHR': t_mhr, 'Oldpeak': t_oldpeak,
-                'Sex_' + t_sex: 1, 'ChestPainType_' + t_cp: 1,
-                'RestingECG_' + t_ecg: 1, 'ExerciseAngina_' + t_ang: 1,
-                'ST_Slope_' + t_slope: 1
+                "Age": t_age,
+                "RestingBP": t_rbp,
+                "Cholesterol": t_chol,
+                "FastingBS": t_fbs,
+                "MaxHR": t_mhr,
+                "Oldpeak": t_oldpeak,
+
+                "Sex_" + t_sex: 1,
+                "ChestPainType_" + t_cp: 1,
+                "RestingECG_" + t_ecg: 1,
+                "ExerciseAngina_" + t_ang: 1,
+                "ST_Slope_" + t_slope: 1
             }
+
+            # Convert to DataFrame
             tab_df = pd.DataFrame([tab_raw])
-            for col in expected_columns:
+
+            # Make sure expected columns are a normal list
+            expected_cols = list(expected_columns)
+
+            # Add missing columns
+            for col in expected_cols:
                 if col not in tab_df.columns:
                     tab_df[col] = 0
-            tab_df = tab_df[expected_columns]
-            
+
+            # Remove unexpected columns
+            tab_df = tab_df.reindex(
+                columns=expected_cols,
+                fill_value=0
+            )
+
+            # Make sure values are numeric
+            tab_df = tab_df.apply(
+                pd.to_numeric,
+                errors="coerce"
+            ).fillna(0)
+
+            # Scale input
             scaled_input = scaler.transform(tab_df)
+
+            # Prediction
             tab_pred = model.predict(scaled_input)[0]
-            
+
+            # Probability
             if hasattr(model, "predict_proba"):
+
                 prob_arr = model.predict_proba(scaled_input)[0]
-                risk_p = prob_arr[1] * 100
-                safe_p = prob_arr[0] * 100
+
+                # Find probability safely
+                if len(prob_arr) == 2:
+                    risk_p = float(prob_arr[1]) * 100
+                    safe_p = float(prob_arr[0]) * 100
+                else:
+                    risk_p = 100.0 if tab_pred == 1 else 0.0
+                    safe_p = 100.0 - risk_p
+
             else:
                 risk_p = 100.0 if tab_pred == 1 else 0.0
                 safe_p = 100.0 - risk_p
 
-            res_c1, res_c2 = st.columns(2)
-            with res_c1:
-                st.metric(label="Risk Probability", value=f"{risk_p:.1f}%")
-            with res_c2:
-                st.metric(label="Calculated Health Score", value=f"{safe_p:.1f}%")
+            # Results
+            st.markdown("### 📊 Prediction Result")
 
-            if tab_pred == 1:
-                st.error("⚠️ **High Risk of Cardiovascular Pathology**")
-                st.write("Patient markers correlate strongly with elevated coronary risk factors. Early diagnostic stress testing and clinical follow-up are advised.")
+            res_c1, res_c2 = st.columns(2)
+
+            with res_c1:
+                st.metric(
+                    "❤️ Risk Probability",
+                    f"{risk_p:.1f}%"
+                )
+
+            with res_c2:
+                st.metric(
+                    "🛡️ Low-Risk Probability",
+                    f"{safe_p:.1f}%"
+                )
+
+            # Final message
+            if int(tab_pred) == 1:
+
+                st.error(
+                    "⚠️ Elevated Risk Detected"
+                )
+
+                st.warning(
+                    "The machine-learning model classified the submitted "
+                    "parameters as higher risk. This is a screening result "
+                    "and is not a medical diagnosis."
+                )
+
             else:
-                st.success("✅ **Low Risk / Within Expected Physiological Range**")
-                st.write("All submitted markers fall inside manageable statistical baseline ranges.")
-        else:
-            st.warning("Model pipeline assets are currently unavailable. Ensure model files are saved in the project repository.")
+
+                st.success(
+                    "✅ Lower Risk Predicted"
+                )
+
+                st.info(
+                    "The machine-learning model classified the submitted "
+                    "parameters as lower risk. This is a screening result "
+                    "and does not guarantee absence of heart disease."
+                )
+
+        except Exception as e:
+
+            st.error("❌ Prediction could not be completed.")
+
+            st.write(
+                "Please check that your model, scaler and columns files "
+                "were created from the same dataset/features."
+            )
+
+            st.code(str(e))
 # Tab 5: Prevention
 with active_tab[4]:
     st.markdown("""
