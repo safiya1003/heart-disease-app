@@ -698,10 +698,7 @@ elif page == "AI Health Assistant":
             "CardioCare AI is researching your question..."
         ):
 
-            result = chatbot_answer(
-                prompt,
-                st.session_state.chat_messages[:-1]
-            )
+            result = chatbot_answer(prompt)
 
         st.session_state.chat_messages.append({
             "role": "assistant",
