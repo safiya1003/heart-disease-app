@@ -702,7 +702,7 @@ elif page == "AI Health Assistant":
 
         st.session_state.chat_messages.append({
             "role": "assistant",
-            "content": result["answer"],
+            "content": result,
             "sources": result["sources"],
             "images": result["images"]
         })
