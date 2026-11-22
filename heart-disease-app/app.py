@@ -589,22 +589,122 @@ elif page == "Lifestyle Guide":
     )
     st.warning("Do not start, stop or change medicines based on this application.")
 
+
 elif page == "AI Health Assistant":
-    st.markdown("## AI heart-health assistant")
-    st.caption("A built-in educational FAQ assistant. It does not connect to an external AI service or provide diagnosis.")
+    st.markdown("## 🫀 CardioCare AI Health Assistant")
+    st.caption(
+        "Ask questions naturally. Get AI-powered explanations, "
+        "current web references and relevant visual resources."
+    )
+
     if "chat_messages" not in st.session_state:
         st.session_state.chat_messages = [
-            {"role": "assistant", "content": "Hello! Ask me a general question about heart health, nutrition, exercise, blood pressure or how this project works."}
+            {
+                "role": "assistant",
+                "content": (
+                    "Hello! Welcome to CardioCare AI. 🫀\n\n"
+                    "I can help explain heart health, blood pressure, "
+                    "cholesterol, ECG reports, nutrition, exercise and "
+                    "medicines.\n\n"
+                    "What would you like to understand today?"
+                ),
+                "images": [],
+                "sources": [],
+            }
         ]
+
+    # Clear conversation.
+    top_left, top_right = st.columns([4, 1])
+    with top_right:
+        if st.button("Clear chat", use_container_width=True):
+            st.session_state.chat_messages = []
+            st.rerun()
+
+    # Display conversation.
     for message in st.session_state.chat_messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-    prompt = st.chat_input("Ask a heart-health question...")
+
+            if message["role"] == "assistant":
+                image_urls = message.get("images", [])
+                if image_urls:
+                    st.markdown("#### Visual references")
+                    image_columns = st.columns(min(2, len(image_urls)))
+
+                    for index, image_url in enumerate(image_urls):
+                        with image_columns[index % len(image_columns)]:
+                            try:
+                                st.image(
+                                    image_url,
+                                    use_container_width=True
+                                )
+                            except Exception:
+                                st.caption("This image could not be displayed.")
+
+                source_list = message.get("sources", [])
+                if source_list:
+                    with st.expander("📚 Sources and further reading"):
+                        for source in source_list:
+                            st.markdown(
+                                f"- [{source['title']}]({source['url']})"
+                            )
+
+    # User input.
+    prompt = st.chat_input(
+        "Ask anything about heart health, medicines, ECG, diet..."
+    )
+
     if prompt:
-        st.session_state.chat_messages.append({"role": "user", "content": prompt})
-        answer = chatbot_answer(prompt)
-        st.session_state.chat_messages.append({"role": "assistant", "content": answer})
-        st.rerun()
+        previous_history = list(st.session_state.chat_messages)
+
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": prompt,
+            "images": [],
+            "sources": [],
+        })
+
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("CardioCare AI is researching and preparing your answer..."):
+                result = chatbot_answer(
+                    prompt,
+                    previous_history
+                )
+
+            st.markdown(result["answer"])
+
+            if result.get("images"):
+                st.markdown("#### Visual references")
+                image_columns = st.columns(
+                    min(2, len(result["images"]))
+                )
+
+                for index, image_url in enumerate(result["images"]):
+                    with image_columns[index % len(image_columns)]:
+                        try:
+                            st.image(
+                                image_url,
+                                use_container_width=True
+                            )
+                        except Exception:
+                            st.caption("This image could not be displayed.")
+
+            if result.get("sources"):
+                with st.expander("📚 Sources and further reading"):
+                    for source in result["sources"]:
+                        st.markdown(
+                            f"- [{source['title']}]({source['url']})"
+                        )
+
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": result["answer"],
+            "images": result.get("images", []),
+            "sources": result.get("sources", []),
+        })
 
 elif page == "ECG Visualizer":
     st.markdown("## ECG waveform visualizer")
