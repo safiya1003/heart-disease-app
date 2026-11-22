@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
+import requests
+import re
 
 # ----------------------------- PAGE CONFIG -----------------------------
 st.set_page_config(
@@ -456,7 +458,6 @@ def render_prediction_form():
             st.error("Prediction could not be completed. Verify that the model, scaler and columns files match.")
             st.exception(exc)
 
-
 def show_latest_result():
     result = st.session_state.latest_result
     if result is None:
@@ -589,22 +590,142 @@ elif page == "Lifestyle Guide":
     )
     st.warning("Do not start, stop or change medicines based on this application.")
 
+
 elif page == "AI Health Assistant":
-    st.markdown("## AI heart-health assistant")
-    st.caption("A built-in educational FAQ assistant. It does not connect to an external AI service or provide diagnosis.")
+
+    st.markdown("## 🫀 AI Heart Health Assistant")
+
+    st.markdown(
+        """
+        <div class="section-card">
+            <h3>Ask. Understand. Learn.</h3>
+            <p class="small-muted">
+                Your personal educational assistant for
+                cardiovascular health, with AI answers,
+                web research and related medical images.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     if "chat_messages" not in st.session_state:
+
         st.session_state.chat_messages = [
-            {"role": "assistant", "content": "Hello! Ask me a general question about heart health, nutrition, exercise, blood pressure or how this project works."}
+            {
+                "role": "assistant",
+                "content": (
+                    "Hello! I am your CardioCare AI assistant. "
+                    "Ask me anything about heart disease, "
+                    "blood pressure, cholesterol, ECG, exercise, "
+                    "nutrition or cardiovascular health."
+                )
+            }
         ]
+
+    # Display previous conversation.
+
     for message in st.session_state.chat_messages:
+
         with st.chat_message(message["role"]):
+
             st.markdown(message["content"])
-    prompt = st.chat_input("Ask a heart-health question...")
+
+            # Display web references.
+
+            if message.get("sources"):
+
+                st.markdown("### 📚 Information sources")
+
+                for i, source in enumerate(
+                    message["sources"], 1
+                ):
+
+                    st.markdown(
+                        f"[{i}. {source['title']}]"
+                        f"({source['url']})"
+                    )
+
+            # Display related educational images.
+
+            if message.get("images"):
+
+                st.markdown("### 🖼️ Related educational images")
+
+                image_columns = st.columns(
+                    len(message["images"])
+                )
+
+                for column, image_item in zip(
+                    image_columns,
+                    message["images"]
+                ):
+
+                    with column:
+
+                        st.image(
+                            image_item["url"],
+                            caption=image_item["title"],
+                            use_container_width=True
+                        )
+
+                        st.caption(
+                            "Licence: "
+                            + image_item["license"]
+                        )
+
+                        if image_item.get("source"):
+
+                            st.markdown(
+                                f"[Image source and attribution]"
+                                f"({image_item['source']})"
+                            )
+
+    # User question input.
+
+    prompt = st.chat_input(
+        "Ask anything about heart health..."
+    )
+
     if prompt:
-        st.session_state.chat_messages.append({"role": "user", "content": prompt})
-        answer = chatbot_answer(prompt)
-        st.session_state.chat_messages.append({"role": "assistant", "content": answer})
+
+        st.session_state.chat_messages.append({
+            "role": "user",
+            "content": prompt
+        })
+
+        with st.spinner(
+            "CardioCare AI is researching your question..."
+        ):
+
+            result = chatbot_answer(
+                prompt,
+                st.session_state.chat_messages[:-1]
+            )
+
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": result["answer"],
+            "sources": result["sources"],
+            "images": result["images"]
+        })
+
         st.rerun()
+
+    if st.button(
+        "Clear conversation",
+        use_container_width=True
+    ):
+
+        st.session_state.chat_messages = [
+            {
+                "role": "assistant",
+                "content": "Hello! What would you like to learn about heart health?"
+            }
+        ]
+
+        st.rerun()
+
 
 elif page == "ECG Visualizer":
     st.markdown("## ECG waveform visualizer")
