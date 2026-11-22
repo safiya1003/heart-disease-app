@@ -350,29 +350,66 @@ def lifestyle_tips(values):
     return tips
 
 
-def chatbot_answer(question):
+
+def chatbot_answer(question, chat_history=None):
     q = question.lower()
-    if any(term in q for term in ["heart attack", "chest pain", "shortness of breath", "breathless", "faint", "sweating"]):
-        return ("**Possible emergency:** New, severe, persistent or unexplained chest discomfort, breathlessness, fainting, "
-                "or cold sweating can be urgent. Call your local emergency number or seek emergency care now. "
-                "Do not rely on this chatbot or the prediction model to assess an emergency.")
-    if any(term in q for term in ["blood pressure", "bp", "hypertension"]):
-        return ("Blood pressure is the force of blood against artery walls. A single reading does not diagnose hypertension. "
-                "Use a validated cuff, rest quietly before measuring, record repeated readings, and review them with a clinician.")
-    if any(term in q for term in ["cholesterol", "ldl", "hdl"]):
-        return ("Cholesterol is a group of blood lipids. LDL, HDL and triglycerides provide more context than total cholesterol alone. "
-                "A healthcare professional can interpret your full lipid panel alongside age, history and other factors.")
-    if any(term in q for term in ["exercise", "workout", "walk"]):
-        return ("For many adults, regular moderate activity is beneficial. Increase gradually and choose an activity appropriate to your ability. "
-                "If you have chest symptoms, breathlessness, faintness or known heart disease, seek medical advice before exercising.")
-    if any(term in q for term in ["food", "diet", "eat", "nutrition"]):
-        return ("A heart-supportive eating pattern often includes vegetables, fruits, whole grains, legumes, nuts and minimally processed foods, "
-                "while limiting excess salt, trans fats and highly processed foods. Individual needs vary.")
-    if any(term in q for term in ["prediction", "score", "result", "model"]):
-        return ("This project applies your existing trained ML model to the entered dataset features. Its output is a screening classification, "
-                "not a diagnosis. Any probability shown is the model's output and may not represent calibrated clinical risk.")
-    return ("I can share general educational information about heart health, blood pressure, cholesterol, physical activity, nutrition and how this project's model works. "
-            "I cannot diagnose, prescribe medication or replace a clinician. What heart-health topic would you like to understand?")
+
+    if any(term in q for term in [
+        "heart attack", "chest pain", "shortness of breath",
+        "breathless", "faint", "sweating"
+    ]):
+        answer = (
+            "**Possible emergency:** New, severe, persistent or unexplained "
+            "chest discomfort, breathlessness, fainting or cold sweating "
+            "can be urgent. Call your local emergency number or seek "
+            "emergency care immediately."
+        )
+
+    elif any(term in q for term in ["blood pressure", "bp", "hypertension"]):
+        answer = (
+            "Blood pressure is the force of blood against artery walls. "
+            "Repeated measurements are more useful than a single reading. "
+            "Discuss your readings with a healthcare professional."
+        )
+
+    elif any(term in q for term in ["cholesterol", "ldl", "hdl"]):
+        answer = (
+            "Cholesterol includes LDL, HDL and triglycerides. A complete "
+            "lipid profile helps a clinician assess your cholesterol levels."
+        )
+
+    elif any(term in q for term in ["exercise", "workout", "walk"]):
+        answer = (
+            "Regular physical activity can support heart health. Choose "
+            "activity appropriate to your ability and seek medical advice "
+            "if you have symptoms or known heart disease."
+        )
+
+    elif any(term in q for term in ["food", "diet", "eat", "nutrition"]):
+        answer = (
+            "A heart-supportive diet often includes fruits, vegetables, "
+            "whole grains, pulses and nuts, while limiting excess salt "
+            "and highly processed foods."
+        )
+
+    elif any(term in q for term in ["prediction", "score", "result", "model"]):
+        answer = (
+            "Your project uses a trained machine-learning model to produce "
+            "a screening classification. It is not a medical diagnosis."
+        )
+
+    else:
+        answer = (
+            "I can explain heart health, blood pressure, cholesterol, "
+            "nutrition, exercise and ECG concepts. Please tell me which "
+            "topic you would like to understand."
+        )
+
+    return {
+        "answer": answer,
+        "images": [],
+        "sources": []
+    }
 
 # ----------------------------- SESSION STATE -----------------------------
 if "latest_result" not in st.session_state:
