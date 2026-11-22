@@ -350,66 +350,200 @@ def lifestyle_tips(values):
     return tips
 
 
-
 def chatbot_answer(question, chat_history=None):
-    q = question.lower()
+    import os
+    import requests
 
-    if any(term in q for term in [
-        "heart attack", "chest pain", "shortness of breath",
-        "breathless", "faint", "sweating"
-    ]):
-        answer = (
-            "**Possible emergency:** New, severe, persistent or unexplained "
-            "chest discomfort, breathlessness, fainting or cold sweating "
-            "can be urgent. Call your local emergency number or seek "
-            "emergency care immediately."
+    # Read API keys from Streamlit Secrets or environment variables
+    try:
+        openai_key = st.secrets.get("OPENAI_API_KEY", "")
+    except Exception:
+        openai_key = ""
+
+    if not openai_key:
+        openai_key = os.getenv("OPENAI_API_KEY", "")
+
+    try:
+        tavily_key = st.secrets.get("TAVILY_API_KEY", "")
+    except Exception:
+        tavily_key = ""
+
+    if not tavily_key:
+        tavily_key = os.getenv("TAVILY_API_KEY", "")
+
+    if not openai_key:
+        return {
+            "answer": (
+                "OpenAI API key is missing. Please add OPENAI_API_KEY "
+                "in your Streamlit Cloud app settings under Secrets."
+            ),
+            "images": [],
+            "sources": []
+        }
+
+    images = []
+    sources = []
+    web_context = ""
+
+    # Search the web for current heart-health information when available
+    if tavily_key:
+        try:
+            search_response = requests.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": tavily_key,
+                    "query": question + " heart health medical information",
+                    "search_depth": "advanced",
+                    "max_results": 5,
+                    "include_images": True
+                },
+                timeout=30
+            )
+
+            if search_response.status_code == 200:
+                search_data = search_response.json()
+
+                for item in search_data.get("results", []):
+                    title = item.get("title", "Medical reference")
+                    url = item.get("url", "")
+                    content = item.get("content", "")
+
+                    if url:
+                        sources.append({
+                            "title": title,
+                            "url": url
+                        })
+
+                    if content:
+                        web_context += (
+                            f"\nTitle: {title}\n"
+                            f"Information: {content}\n"
+                        )
+
+                for item in search_data.get("images", []):
+                    if isinstance(item, str):
+                        images.append(item)
+                    elif isinstance(item, dict) and item.get("url"):
+                        images.append(item["url"])
+
+        except Exception:
+            pass
+
+    # Instructions for the AI assistant
+    system_prompt = """
+You are CardioCare AI, an intelligent heart-health educational assistant.
+
+Your responsibilities:
+1. Understand natural language questions, even if grammar or spelling is incorrect.
+2. Answer the exact question instead of giving generic responses.
+3. Explain heart disease, symptoms, causes, prevention, tests,
+   ECG, blood pressure, cholesterol, medicines and nutrition.
+4. Explain difficult medical concepts in simple English.
+5. Give detailed, structured answers using headings and bullet points
+   when useful.
+6. Use the supplied web research when relevant and do not invent sources.
+7. Maintain conversational context and understand follow-up questions.
+8. Explain general medicine information, but never prescribe medicines,
+   invent dosages, or tell users to start, stop or change medication.
+9. Never claim to diagnose a person or replace a doctor.
+10. For possible heart attack symptoms, advise immediate emergency care.
+
+If the user asks what happens when heart disease develops,
+explain what happens to the heart and blood vessels, possible symptoms,
+complications and why medical evaluation matters.
+"""
+
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        }
+    ]
+
+    # Include recent conversation for follow-up understanding
+    if chat_history:
+        for item in chat_history[-10:]:
+            role = item.get("role")
+            content = item.get("content", "")
+
+            if role in ["user", "assistant"] and isinstance(content, str):
+                messages.append({
+                    "role": role,
+                    "content": content
+                })
+
+    # Add current question and available web research
+    user_message = "User question: " + question
+
+    if web_context:
+        user_message += (
+            "\n\nCurrent web research for reference:\n"
+            + web_context[:12000]
         )
 
-    elif any(term in q for term in ["blood pressure", "bp", "hypertension"]):
-        answer = (
-            "Blood pressure is the force of blood against artery walls. "
-            "Repeated measurements are more useful than a single reading. "
-            "Discuss your readings with a healthcare professional."
+    messages.append({
+        "role": "user",
+        "content": user_message
+    })
+
+    # Ask the OpenAI AI model
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {openai_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "gpt-4o-mini",
+                "messages": messages,
+                "temperature": 0.5,
+                "max_tokens": 1500
+            },
+            timeout=60
         )
 
-    elif any(term in q for term in ["cholesterol", "ldl", "hdl"]):
-        answer = (
-            "Cholesterol includes LDL, HDL and triglycerides. A complete "
-            "lipid profile helps a clinician assess your cholesterol levels."
-        )
+        if response.status_code != 200:
+            try:
+                error_message = response.json().get("error", {}).get(
+                    "message", "Unknown API error"
+                )
+            except Exception:
+                error_message = "Unable to read the API error."
 
-    elif any(term in q for term in ["exercise", "workout", "walk"]):
-        answer = (
-            "Regular physical activity can support heart health. Choose "
-            "activity appropriate to your ability and seek medical advice "
-            "if you have symptoms or known heart disease."
-        )
+            return {
+                "answer": (
+                    "The AI service returned an error: "
+                    + str(error_message)
+                ),
+                "images": images,
+                "sources": sources
+            }
 
-    elif any(term in q for term in ["food", "diet", "eat", "nutrition"]):
-        answer = (
-            "A heart-supportive diet often includes fruits, vegetables, "
-            "whole grains, pulses and nuts, while limiting excess salt "
-            "and highly processed foods."
-        )
+        data = response.json()
+        answer = data["choices"][0]["message"]["content"]
 
-    elif any(term in q for term in ["prediction", "score", "result", "model"]):
-        answer = (
-            "Your project uses a trained machine-learning model to produce "
-            "a screening classification. It is not a medical diagnosis."
-        )
+        return {
+            "answer": answer,
+            "images": images[:4],
+            "sources": sources[:5]
+        }
 
-    else:
-        answer = (
-            "I can explain heart health, blood pressure, cholesterol, "
-            "nutrition, exercise and ECG concepts. Please tell me which "
-            "topic you would like to understand."
-        )
+    except requests.exceptions.Timeout:
+        return {
+            "answer": "The AI request timed out. Please try again.",
+            "images": [],
+            "sources": []
+        }
 
-    return {
-        "answer": answer,
-        "images": [],
-        "sources": []
-    }
+    except Exception as exc:
+        return {
+            "answer": "Unable to contact the AI service: " + str(exc),
+            "images": [],
+            "sources": []
+        }
+
+
 
 # ----------------------------- SESSION STATE -----------------------------
 if "latest_result" not in st.session_state:
