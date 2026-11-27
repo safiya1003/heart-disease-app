@@ -15,6 +15,10 @@ Optional PDF dependency:
 import os
 import io
 import html
+import re
+import json
+import sqlite3
+import requests
 from datetime import datetime
 
 import joblib
@@ -36,6 +40,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "RF_KNN_heart.pkl")
 SCALER_PATH = os.path.join(BASE_DIR, "scaler.pkl")
 COLUMNS_PATH = os.path.join(BASE_DIR, "columns.pkl")
 HISTORY_PATH = os.path.join(BASE_DIR, "prediction_history.csv")
+CLINICAL_DB_PATH = os.path.join(BASE_DIR, "cardiocare_clinical.db")
 
 # ----------------------------- PREMIUM THEME ----------------------------
 st.markdown(
@@ -553,6 +558,218 @@ if "latest_values" not in st.session_state:
 if "latest_profile" not in st.session_state:
     st.session_state.latest_profile = {"name": "", "patient_id": ""}
 
+
+# ---------------------- PROFESSIONAL PLATFORM HELPERS ----------------------
+def init_clinical_db():
+    """Local prototype database. Use encrypted managed storage for real patient deployment."""
+    with sqlite3.connect(CLINICAL_DB_PATH) as conn:
+        conn.execute("""CREATE TABLE IF NOT EXISTS reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT, patient_id TEXT,
+            patient_name TEXT, filename TEXT, extracted_json TEXT, report_text TEXT)""")
+
+
+def extract_report_text(uploaded_file):
+    """Extract text from PDF or image. OCR requires Tesseract installed on the host."""
+    name = uploaded_file.name.lower()
+    raw = uploaded_file.getvalue()
+    if name.endswith(".pdf"):
+        try:
+            import pdfplumber
+            with pdfplumber.open(io.BytesIO(raw)) as pdf:
+                return "\n".join((page.extract_text() or "") for page in pdf.pages)
+        except ImportError:
+            raise RuntimeError("PDF support is missing. Install pdfplumber: pip install pdfplumber")
+    if name.endswith((".png", ".jpg", ".jpeg", ".tif", ".tiff")):
+        try:
+            from PIL import Image
+            import pytesseract
+            return pytesseract.image_to_string(Image.open(io.BytesIO(raw)))
+        except ImportError:
+            raise RuntimeError("Image OCR needs Pillow and pytesseract. Install them and install Tesseract OCR on your computer.")
+    raise RuntimeError("Please upload a PDF, PNG, JPG or JPEG file.")
+
+
+CLINICAL_PATTERNS = {
+    "Total Cholesterol": [r"total\s+cholesterol", r"cholesterol\s*\(total\)"],
+    "LDL Cholesterol": [r"\bldl\b"], "HDL Cholesterol": [r"\bhdl\b"],
+    "Triglycerides": [r"triglycerides?"], "Resting Blood Pressure": [r"blood\s+pressure", r"\bbp\b"],
+    "Fasting Blood Glucose": [r"fasting\s+(?:blood\s+)?(?:glucose|sugar)", r"\bfbs\b"],
+    "HbA1c": [r"\bhba1c\b", r"glycated\s+haemoglobin", r"glycated\s+hemoglobin"],
+    "Heart Rate": [r"heart\s+rate", r"pulse\s+rate"], "Troponin": [r"troponin(?:\s+i|\s+t)?"],
+    "Haemoglobin": [r"haemoglobin", r"hemoglobin"],
+}
+
+
+def extract_clinical_values(report_text):
+    """Conservative label/value matching; user must verify against the source report."""
+    found = []
+    lines = [re.sub(r"\s+", " ", x).strip() for x in report_text.splitlines() if x.strip()]
+    for line in lines:
+        for label, patterns in CLINICAL_PATTERNS.items():
+            if any(re.search(p, line, re.I) for p in patterns):
+                # Extract first numeric result after a recognized label, excluding ranges where possible.
+                m = re.search(r"(?:[:=]|\s)\s*(-?\d+(?:\.\d+)?)\s*(mg/dL|mmol/L|mmHg|bpm|%|g/dL|ng/L|pg/mL)?", line, re.I)
+                if m:
+                    found.append({"Parameter": label, "Value": m.group(1), "Unit": m.group(2) or "Not detected", "Source line": line[:240]})
+                break
+    # Keep first occurrence per parameter to avoid duplicate rows from repeated report sections.
+    unique = {}
+    for item in found:
+        unique.setdefault(item["Parameter"], item)
+    return list(unique.values())
+
+
+def save_clinical_report(profile, filename, extracted, report_text):
+    init_clinical_db()
+    with sqlite3.connect(CLINICAL_DB_PATH) as conn:
+        conn.execute("INSERT INTO reports(created_at, patient_id, patient_name, filename, extracted_json, report_text) VALUES(?,?,?,?,?,?)",
+                     (datetime.now().isoformat(timespec="seconds"), profile.get("patient_id", ""),
+                      profile.get("name", ""), filename, json.dumps(extracted), report_text[:30000]))
+
+
+def load_clinical_reports(patient_id=""):
+    init_clinical_db()
+    with sqlite3.connect(CLINICAL_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        if patient_id.strip():
+            rows = conn.execute("SELECT id, created_at, patient_id, patient_name, filename, extracted_json FROM reports WHERE patient_id=? ORDER BY id DESC", (patient_id.strip(),)).fetchall()
+        else:
+            rows = conn.execute("SELECT id, created_at, patient_id, patient_name, filename, extracted_json FROM reports ORDER BY id DESC").fetchall()
+    return [dict(r) for r in rows]
+
+
+def report_explanation(values):
+    if not values:
+        return "No clearly labelled numeric results were detected. Please check the uploaded report manually."
+    lines = []
+    for item in values:
+        lines.append(f"**{item['Parameter']}: {item['Value']} {item['Unit']}**  \nExtracted from: `{item['Source line']}`")
+    return "\n\n".join(lines)
+
+
+
+def find_nearby_healthcare(place, category="all", radius=10000):
+    """Search OpenStreetMap using multiple Overpass servers."""
+    headers = {
+        "User-Agent": "CardioCareAI-StudentProject/1.0"
+    }
+
+    geo = requests.get(
+        "https://nominatim.openstreetmap.org/search",
+        params={"q": place, "format": "json", "limit": 1},
+        headers=headers,
+        timeout=30
+    )
+    geo.raise_for_status()
+
+    locations = geo.json()
+    if not locations:
+        return pd.DataFrame(), None
+
+    lat = float(locations[0]["lat"])
+    lon = float(locations[0]["lon"])
+
+    filters = {
+        "all": 'node["amenity"~"hospital|clinic|doctors"],way["amenity"~"hospital|clinic|doctors"];node["healthcare"~"hospital|clinic|doctor|laboratory"],way["healthcare"~"hospital|clinic|doctor|laboratory"]',
+        "hospitals": 'node["amenity"="hospital"],way["amenity"="hospital"];node["healthcare"="hospital"],way["healthcare"="hospital"]',
+        "labs": 'node["healthcare"="laboratory"],way["healthcare"="laboratory"];node["amenity"="clinic"],way["amenity"="clinic"]',
+        "doctors": 'node["amenity"="doctors"],way["amenity"="doctors"];node["healthcare"="doctor"],way["healthcare"="doctor"]'
+    }
+
+    selectors = filters[category].split(";")
+    scoped = [
+        f"{s.strip()}(around:{radius},{lat},{lon})"
+        for s in selectors if s.strip()
+    ]
+
+    query = "[out:json][timeout:45];(" + ";".join(scoped) + ");out center tags;"
+
+    servers = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter"
+    ]
+
+    elements = []
+    last_error = None
+
+    for server in servers:
+        try:
+            response = requests.post(
+                server,
+                data={"data": query},
+                headers=headers,
+                timeout=60
+            )
+            response.raise_for_status()
+            elements = response.json().get("elements", [])
+            break
+        except requests.RequestException as error:
+            last_error = error
+        except ValueError as error:
+            last_error = error
+
+    else:
+        raise RuntimeError(
+            f"Healthcare search is temporarily unavailable. "
+            f"Please try again later. Details: {last_error}"
+        )
+
+    rows = []
+
+    for el in elements:
+        tags = el.get("tags", {})
+        name = tags.get("name")
+
+        if not name:
+            continue
+
+        elat = el.get("lat", el.get("center", {}).get("lat"))
+        elon = el.get("lon", el.get("center", {}).get("lon"))
+
+        if elat is None or elon is None:
+            continue
+
+        rows.append({
+            "Name": name,
+            "Type": tags.get("healthcare", tags.get("amenity", "healthcare facility")),
+            "Address": ", ".join(
+                x for x in [
+                    tags.get("addr:street"),
+                    tags.get("addr:city"),
+                    tags.get("addr:postcode")
+                ] if x
+            ) or "Address not listed",
+            "Phone": tags.get("phone", tags.get("contact:phone", "Not listed")),
+            "Website": tags.get("website", tags.get("contact:website", "")),
+            "Latitude": elat,
+            "Longitude": elon,
+            "Map": f"https://www.openstreetmap.org/?mlat={elat}&mlon={elon}#map=17/{elat}/{elon}"
+        })
+
+    df = (
+        pd.DataFrame(rows).drop_duplicates(
+            subset=["Name", "Latitude", "Longitude"]
+        ) if rows else pd.DataFrame()
+    )
+
+    return df, (lat, lon)
+
+
+
+TEST_GUIDE = [
+    ("ECG", "Records the heart's electrical activity. A clinician interprets the tracing."),
+    ("Lipid profile", "Measures total cholesterol, LDL, HDL and triglycerides; interpretation depends on overall clinical context."),
+    ("Blood glucose / HbA1c", "Assesses blood glucose or longer-term glucose patterns."),
+    ("Echocardiogram", "Ultrasound imaging used to assess heart structure, valves and pumping function."),
+    ("Troponin", "A blood marker used in the evaluation of possible heart muscle injury, including urgent symptoms."),
+    ("CBC", "Measures blood cells and may help assess conditions such as anaemia or infection."),
+    ("Exercise stress test", "Assesses the heart during exertion when a clinician considers it appropriate."),
+    ("Holter monitoring", "Records heart rhythm over an extended period to investigate intermittent rhythm symptoms."),
+]
+
+init_clinical_db()
+
 # ----------------------------- SIDEBAR ----------------------------------
 with st.sidebar:
     st.markdown("## 🫀 CardioCare AI")
@@ -560,7 +777,8 @@ with st.sidebar:
     page = st.radio(
         "NAVIGATION",
         ["Dashboard", "Heart Prediction", "Detailed Report", "Explainable AI",
-         "Patient History", "Lifestyle Guide", "AI Health Assistant", "ECG Visualizer", "Heart Education"],
+         "Patient History", "Lifestyle Guide", "AI Health Assistant", "ECG Visualizer", "Heart Education",
+          "Medical Report Analyzer", "Find Healthcare Near Me", "Heart Test Guide", "Patient Clinical Records"],
         label_visibility="visible",
     )
     st.divider()
@@ -594,19 +812,20 @@ def render_prediction_form():
     with st.form("heart_prediction_form"):
         a, b, c = st.columns(3)
         with a:
-            age = st.slider("Age (years)", 18, 100, 48)
+            prefill = st.session_state.get("prediction_prefill", {})
+            age = st.slider("Age (years)", 18, 100, int(prefill.get("Age", 48)))
             sex = st.selectbox("Sex", ["M", "F"], format_func=lambda x: "Male" if x == "M" else "Female")
             chest_pain = st.selectbox("Chest pain type", ["ATA", "NAP", "ASY", "TA"])
-            resting_bp = st.number_input("Resting blood pressure (mmHg)", 80, 220, 130)
+            resting_bp = st.number_input("Resting blood pressure (mmHg)", 80, 220, int(prefill.get("RestingBP", 130)))
         with b:
-            cholesterol = st.number_input("Total cholesterol (mg/dL)", 100, 600, 220)
-            fasting_bs = st.selectbox("Fasting blood sugar > 120 mg/dL", [0, 1], format_func=lambda x: "Yes" if x else "No")
+            cholesterol = st.number_input("Total cholesterol (mg/dL)", 100, 600, int(prefill.get("Cholesterol", 220)))
+            fasting_bs = st.selectbox("Fasting blood sugar > 120 mg/dL", [0, 1], index=int(prefill.get("FastingBS", 0)), format_func=lambda x: "Yes" if x else "No")
             resting_ecg = st.selectbox("Resting ECG category", ["Normal", "ST", "LVH"])
-            max_hr = st.slider("Maximum heart rate achieved (bpm)", 60, 220, 145)
+            max_hr = st.slider("Maximum heart rate achieved (bpm)", 60, 220, int(prefill.get("MaxHR", 145)))
         with c:
             exercise_angina = st.selectbox("Exercise-induced angina", ["N", "Y"], format_func=lambda x: "No" if x == "N" else "Yes")
             st_slope = st.selectbox("ST slope", ["Up", "Flat", "Down"])
-            oldpeak = st.number_input("Oldpeak / ST depression", min_value=0.0, max_value=6.0, value=1.2, step=0.1)
+            oldpeak = st.number_input("Oldpeak / ST depression", min_value=0.0, max_value=6.0, value=float(prefill.get("Oldpeak", 1.2)), step=0.1)
         submitted = st.form_submit_button("Run heart-health screening", use_container_width=True)
     if submitted:
         values = {
@@ -827,6 +1046,9 @@ elif page == "AI Health Assistant":
 
     if prompt:
         previous_history = list(st.session_state.chat_messages)
+        report_context = st.session_state.get("current_report_text", "")
+        if report_context:
+            previous_history.append({"role":"assistant", "content":"The user has an uploaded report available for discussion. Extracted source text (may contain OCR errors):\n" + report_context[:8000]})
 
         st.session_state.chat_messages.append({
             "role": "user",
@@ -912,6 +1134,148 @@ elif page == "Heart Education":
     with st.expander("What this project cannot do"):
         st.write("It cannot diagnose heart disease, interpret an actual ECG, assess an emergency, prescribe treatment or guarantee that a person is healthy.")
     st.markdown('<div class="warning-note"><b>Emergency:</b> If you suspect a heart attack or have severe/new chest symptoms, call your local emergency service immediately. Do not wait for an app prediction.</div>', unsafe_allow_html=True)
+
+
+elif page == "Medical Report Analyzer":
+    st.markdown("## Medical Report Analyzer")
+    st.write("Upload a laboratory report or clinical document. CardioCare extracts readable text and labelled values for your review.")
+    st.info("Extraction is assistive, not a diagnosis. Always compare extracted values with the original report, units and laboratory reference ranges.")
+    uploaded = st.file_uploader("Upload medical report", type=["pdf","png","jpg","jpeg"], key="clinical_report_upload")
+    if uploaded is not None:
+        if st.button("Analyze uploaded report", type="primary"):
+            try:
+                with st.spinner("Reading report..."):
+                    report_text = extract_report_text(uploaded)
+                    extracted = extract_clinical_values(report_text)
+                st.session_state.current_report_text = report_text
+                st.session_state.current_report_values = extracted
+                st.session_state.current_report_filename = uploaded.name
+                st.success("Report text extracted. Please verify every value against the original document.")
+            except Exception as exc:
+                st.error(str(exc))
+    if st.session_state.get("current_report_text"):
+        st.markdown("### Extracted clinical information")
+        extracted = st.session_state.get("current_report_values", [])
+        if extracted:
+            st.dataframe(pd.DataFrame(extracted), use_container_width=True, hide_index=True)
+        else:
+            st.warning("No labelled numeric values were confidently detected. This can happen with handwritten, low-quality or differently formatted reports.")
+        with st.expander("View extracted report text"):
+            st.text(st.session_state.current_report_text[:20000])
+        st.markdown("### Extracted report summary")
+        st.markdown(report_explanation(extracted))
+        st.caption("The analyzer does not decide whether a result is clinically normal unless the original report's reference range is reliably available.")
+        consent_ai = st.checkbox("I consent to sending the extracted report text to my configured AI service for an educational explanation.", key="report_ai_consent")
+        if st.button("Generate AI explanation", disabled=not consent_ai):
+            try:
+                prompt_for_ai = ("Explain this uploaded medical report in simple language for education. "
+                                 "Use only the supplied values, do not diagnose, do not recommend medication, "
+                                 "identify uncertainty and advise clinician review. Extracted values: "
+                                 + json.dumps(extracted) + "\nReport text: " + st.session_state.current_report_text[:7000])
+                with st.spinner("Preparing report explanation..."):
+                    ai_result = chatbot_answer(prompt_for_ai)
+                st.session_state.current_report_ai_explanation = ai_result.get("answer", "No explanation returned.")
+            except Exception as exc:
+                st.error(f"AI explanation unavailable: {exc}")
+        if st.session_state.get("current_report_ai_explanation"):
+            st.markdown("#### AI explanation (educational only)")
+            st.markdown(st.session_state.current_report_ai_explanation)
+        if st.button("Save report to patient clinical records"):
+            try:
+                save_clinical_report(st.session_state.latest_profile, st.session_state.get("current_report_filename","uploaded_report"), extracted, st.session_state.current_report_text)
+                st.success("Report summary saved to the local clinical records database.")
+            except Exception as exc:
+                st.error(f"Could not save report: {exc}")
+        # Only map fields with compatible units and meaning; never fill categorical/model features from guesswork.
+        compatible = {}
+        for item in extracted:
+            try: number=float(item["Value"])
+            except (ValueError, TypeError): continue
+            if item["Parameter"] == "Total Cholesterol" and item["Unit"].lower() in ("mg/dl","not detected") and 100 <= number <= 600:
+                compatible["Cholesterol"] = int(round(number))
+            if item["Parameter"] == "Resting Blood Pressure" and "/" not in item["Source line"] and item["Unit"].lower() in ("mmhg","not detected") and 80 <= number <= 220:
+                compatible["RestingBP"] = int(round(number))
+            if item["Parameter"] == "Fasting Blood Glucose" and item["Unit"].lower() in ("mg/dl","not detected"):
+                compatible["FastingBS"] = int(number > 120)
+        if compatible:
+            st.markdown("### Transfer compatible values to Heart Prediction")
+            st.write("Only fields with a compatible measurement were detected. Remaining model inputs must be entered from verified clinical information.")
+            st.json(compatible)
+            if st.button("Use these values in Heart Prediction"):
+                st.session_state.prediction_prefill = compatible
+                st.success("Compatible values prepared. Open Heart Prediction and verify them before running the model.")
+        pdf = make_pdf(st.session_state.latest_profile, {x["Parameter"]:x["Value"]+" "+x["Unit"] for x in extracted} or {"Report":"Text extracted; manual review required"},
+                       {"is_positive":False,"prediction":"Not run","model_score":None})
+        if pdf:
+            st.download_button("Download extracted report summary PDF", pdf, "CardioCare_Extracted_Report_Summary.pdf", "application/pdf")
+
+elif page == "Find Healthcare Near Me":
+    st.markdown("## Find hospitals, laboratories and doctors")
+    st.caption("Enter a city, locality or PIN code. This demo uses OpenStreetMap community listings; verify details directly before travelling or booking.")
+    place = st.text_input("Your area / city / PIN code", placeholder="e.g. Mohali, Punjab")
+    category_label = st.selectbox("Facility type", ["All healthcare facilities","Hospitals","Diagnostic labs / clinics","Doctors / clinics"])
+    category = {"All healthcare facilities":"all","Hospitals":"hospitals","Diagnostic labs / clinics":"labs","Doctors / clinics":"doctors"}[category_label]
+    radius_km = st.select_slider("Search radius", options=[2,5,10,15,25], value=10)
+    if st.button("Search nearby healthcare", type="primary"):
+        if not place.strip():
+            st.warning("Enter your area or city to search.")
+        else:
+            try:
+                with st.spinner("Searching mapped healthcare facilities..."):
+                    facilities, center = find_nearby_healthcare(place.strip(), category, radius_km*1000)
+                st.session_state.nearby_facilities = facilities
+                st.session_state.nearby_center = center
+                st.session_state.nearby_search_place = place.strip()
+                if facilities.empty: st.warning("No mapped results were found. Try a nearby city or a larger radius.")
+                else: st.success(f"Found {len(facilities)} mapped facilities.")
+            except Exception as exc:
+                st.error(f"Location search is temporarily unavailable: {exc}")
+    facilities = st.session_state.get("nearby_facilities", pd.DataFrame())
+    if isinstance(facilities, pd.DataFrame) and not facilities.empty:
+        st.dataframe(facilities[["Name","Type","Address","Phone","Website"]], use_container_width=True, hide_index=True)
+        st.markdown("### Map locations")
+        st.map(facilities.rename(columns={"Latitude":"lat","Longitude":"lon"})[["lat","lon"]])
+        for _, row in facilities.iterrows():
+            website = f" · [Website]({row['Website']})" if row["Website"] else ""
+            st.markdown(f"**{row['Name']}** · {row['Type']}  \n{row['Address']} · {row['Phone']} · [Open map]({row['Map']}){website}")
+        st.caption("Listings, telephone numbers, service availability, opening hours and home collection are not independently verified by CardioCare AI.")
+
+elif page == "Heart Test Guide":
+    st.markdown("## Heart Health Test Guide")
+    st.write("Learn what common investigations are used for. A clinician should decide which tests are appropriate for an individual.")
+    for test_name, description in TEST_GUIDE:
+        with st.expander(test_name):
+            st.write(description)
+            if test_name in ("ECG","Troponin"):
+                st.warning("If you have new or severe chest pain, breathlessness, sweating, faintness or pain spreading to your arm/jaw/back, seek emergency care immediately. Do not use this app to arrange a routine test first.")
+    st.markdown("### What should I ask a laboratory? ")
+    st.markdown("- Is the requested test available at this branch?\n- Is fasting required, and for how long? Follow the clinician/lab instructions.\n- What is the total price and expected report time?\n- Is home sample collection available at my address?\n- How will the verified report be delivered?")
+
+elif page == "Patient Clinical Records":
+    st.markdown("## Patient Clinical Records")
+    st.caption("Local prototype storage. Do not use this local database for real patient care or sensitive production records without encryption, authentication, access controls, backups and applicable legal/privacy compliance.")
+    records = load_clinical_reports(profile_id)
+    st.metric("Saved report records", len(records))
+    if records:
+        for record in records:
+            with st.expander(f"{record['created_at']} · {record['filename']} · {record['patient_name'] or 'Unnamed patient'}"):
+                try:
+                    items=json.loads(record["extracted_json"])
+                    if items: st.dataframe(pd.DataFrame(items), use_container_width=True, hide_index=True)
+                    else: st.write("No structured values were extracted.")
+                except Exception:
+                    st.write("Saved report metadata could not be displayed.")
+    else:
+        st.info("No saved report summaries found for this patient ID. Upload and save a report in Medical Report Analyzer.")
+    st.markdown("### Existing prediction history")
+    history = load_history()
+    if not history.empty:
+        if profile_id.strip() and "Patient ID" in history.columns:
+            history = history[history["Patient ID"].astype(str) == profile_id.strip()]
+        st.dataframe(history.iloc[::-1], use_container_width=True, hide_index=True)
+    else:
+        st.info("No prediction history is available yet.")
+
 
 # ----------------------------- FOOTER -----------------------------------
 st.markdown(
